@@ -1,3 +1,7 @@
+//! FFI functions for communicating with the host.
+
+#![allow(missing_docs)]
+
 use std::ffi::c_void;
 
 use bevy_app::App;
@@ -10,7 +14,7 @@ extern "C" {
     pub fn console_warn(msg: *const u8, len: usize);
     pub fn console_error(msg: *const u8, len: usize);
     pub fn send_serialized_event(event: *const u8, len: usize);
-    // pub fn get_next_event(event: *const u8, len: usize) -> i32;
+    pub fn get_next_event(event: *const u8, len: usize) -> usize;
 }
 
 #[cfg(feature = "bevy")]

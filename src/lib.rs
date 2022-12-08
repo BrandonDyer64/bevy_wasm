@@ -1,42 +1,45 @@
-use bevy_app::{App, Plugin};
+use std::collections::VecDeque;
+
+use bevy_app::{App, CoreStage, Plugin};
 use bevy_ecs::{
-    prelude::EventWriter,
+    prelude::{EventReader, EventWriter},
     system::{ResMut, Resource},
 };
 use bevy_log::{error, info, warn};
 use serde::{de::DeserializeOwned, Serialize};
 use wasmtime::*;
 
-pub trait Message: Send + Sync + Serialize + DeserializeOwned + 'static {}
+pub trait Message: Send + Sync + Serialize + DeserializeOwned + Clone + 'static {}
 
-impl<T> Message for T where T: Send + Sync + Serialize + DeserializeOwned + 'static {}
+impl<T> Message for T where T: Send + Sync + Serialize + DeserializeOwned + Clone + 'static {}
 
-struct State<M: Message> {
+struct State<In: Message, Out: Message> {
     app_ptr: i32,
-    events_out: Vec<M>,
+    events_in: VecDeque<In>,
+    events_out: Vec<Out>,
 }
 
-struct WasmRuntime<M: Message> {
+struct WasmRuntime<In: Message, Out: Message> {
     instance: Instance,
-    store: Store<State<M>>,
+    store: Store<State<In, Out>>,
 }
 
 #[derive(Resource)]
-pub struct WasmResource<M: Message> {
-    runtimes: Vec<WasmRuntime<M>>,
-    linker: Linker<State<M>>,
+pub struct WasmResource<In: Message, Out: Message> {
+    runtimes: Vec<WasmRuntime<In, Out>>,
+    linker: Linker<State<In, Out>>,
     engine: Engine,
 }
 
-impl<M: Message> WasmResource<M> {
+impl<In: Message, Out: Message> WasmResource<In, Out> {
     pub fn new() -> Self {
         let engine = Engine::default();
-        let mut linker: Linker<State<M>> = Linker::new(&engine);
+        let mut linker: Linker<State<In, Out>> = Linker::new(&engine);
         linker
             .func_wrap(
                 "host",
                 "console_info",
-                |mut caller: Caller<'_, State<M>>, msg: i32, len: i32| {
+                |mut caller: Caller<'_, State<In, Out>>, msg: i32, len: u32| {
                     let mem = match caller.get_export("memory") {
                         Some(Extern::Memory(mem)) => mem,
                         _ => panic!("failed to find host memory"),
@@ -56,7 +59,7 @@ impl<M: Message> WasmResource<M> {
             .func_wrap(
                 "host",
                 "console_warn",
-                |mut caller: Caller<'_, State<M>>, msg: i32, len: i32| {
+                |mut caller: Caller<'_, State<In, Out>>, msg: i32, len: u32| {
                     let mem = match caller.get_export("memory") {
                         Some(Extern::Memory(mem)) => mem,
                         _ => panic!("failed to find host memory"),
@@ -76,7 +79,7 @@ impl<M: Message> WasmResource<M> {
             .func_wrap(
                 "host",
                 "console_error",
-                |mut caller: Caller<'_, State<M>>, msg: i32, len: i32| {
+                |mut caller: Caller<'_, State<In, Out>>, msg: i32, len: u32| {
                     let mem = match caller.get_export("memory") {
                         Some(Extern::Memory(mem)) => mem,
                         _ => panic!("failed to find host memory"),
@@ -96,7 +99,7 @@ impl<M: Message> WasmResource<M> {
             .func_wrap(
                 "host",
                 "store_app",
-                |mut caller: Caller<'_, State<M>>, app_ptr: i32| {
+                |mut caller: Caller<'_, State<In, Out>>, app_ptr: i32| {
                     caller.data_mut().app_ptr = app_ptr;
                     info!("Storing app pointer: {:X}", app_ptr);
                 },
@@ -106,7 +109,7 @@ impl<M: Message> WasmResource<M> {
             .func_wrap(
                 "host",
                 "send_serialized_event",
-                |mut caller: Caller<'_, State<M>>, msg: i32, len: i32| {
+                |mut caller: Caller<'_, State<In, Out>>, msg: i32, len: u32| {
                     let mem = match caller.get_export("memory") {
                         Some(Extern::Memory(mem)) => mem,
                         _ => panic!("failed to find host memory"),
@@ -117,7 +120,7 @@ impl<M: Message> WasmResource<M> {
                         .get(msg as u32 as usize..)
                         .and_then(|arr| arr.get(..len as u32 as usize))
                         .unwrap();
-                    let event: M = match bincode::deserialize(data) {
+                    let event: Out = match bincode::deserialize(data) {
                         Ok(event) => event,
                         Err(e) => {
                             error!("Failed to deserialize event: {}", e);
@@ -125,6 +128,37 @@ impl<M: Message> WasmResource<M> {
                         }
                     };
                     caller.data_mut().events_out.push(event);
+                },
+            )
+            .unwrap();
+        linker
+            .func_wrap(
+                "host",
+                "get_next_event",
+                |mut caller: Caller<'_, State<In, Out>>, arena: i32, len: u32| -> u32 {
+                    let mem = match caller.get_export("memory") {
+                        Some(Extern::Memory(mem)) => mem,
+                        _ => panic!("failed to find host memory"),
+                    };
+
+                    let Some(event) = caller.data_mut().events_in.pop_front() else { return 0 };
+
+                    let serialized_event = match bincode::serialize(&event) {
+                        Ok(event) => event,
+                        Err(e) => {
+                            error!("Failed to serialize event: {}", e);
+                            return 0;
+                        }
+                    };
+
+                    let data = mem
+                        .data_mut(&mut caller)
+                        .get_mut(arena as u32 as usize..)
+                        .and_then(|arr| arr.get_mut(..len as u32 as usize))
+                        .unwrap();
+
+                    data[..serialized_event.len()].copy_from_slice(serialized_event.as_slice());
+                    serialized_event.len() as u32
                 },
             )
             .unwrap();
@@ -143,7 +177,7 @@ impl<M: Message> WasmResource<M> {
             .func_wrap(
                 "__wbindgen_placeholder__",
                 "__wbindgen_throw",
-                |mut caller: Caller<'_, State<M>>, msg: i32, len: i32| {
+                |mut caller: Caller<'_, State<In, Out>>, msg: i32, len: i32| {
                     let mem = match caller.get_export("memory") {
                         Some(Extern::Memory(mem)) => mem,
                         _ => panic!("failed to find host memory"),
@@ -192,7 +226,8 @@ impl<M: Message> WasmResource<M> {
             &self.engine,
             State {
                 app_ptr: 0,
-                events_out: vec![],
+                events_out: Vec::new(),
+                events_in: VecDeque::new(),
             },
         );
         self.linker.module(&mut store, "", &module).unwrap();
@@ -214,28 +249,40 @@ impl<M: Message> WasmResource<M> {
     }
 }
 
-pub struct WasmPlugin<M: Message>(pub Vec<Box<[u8]>>, pub std::marker::PhantomData<M>);
+pub struct WasmPlugin<In: Message, Out: Message>(
+    Vec<Box<[u8]>>,
+    std::marker::PhantomData<In>,
+    std::marker::PhantomData<Out>,
+);
 
-impl<M: Message> WasmPlugin<M> {
+impl<In: Message, Out: Message> WasmPlugin<In, Out> {
     pub fn new(wasm_bytes: Vec<Box<[u8]>>) -> Self {
-        WasmPlugin(wasm_bytes, std::marker::PhantomData)
+        WasmPlugin(
+            wasm_bytes,
+            std::marker::PhantomData,
+            std::marker::PhantomData,
+        )
     }
 }
 
-impl<M: Message> Plugin for WasmPlugin<M> {
+impl<In: Message, Out: Message> Plugin for WasmPlugin<In, Out> {
     fn build(&self, app: &mut App) {
-        let mut wasm_resource = WasmResource::<M>::new();
+        let mut wasm_resource = WasmResource::<In, Out>::new();
 
         for wasm_bytes in &self.0 {
             wasm_resource.insert_wasm(wasm_bytes);
         }
 
         app.insert_resource(wasm_resource)
-            .add_system(update_system::<M>);
+            .add_system(update_system::<In, Out>)
+            .add_system_to_stage(CoreStage::PostUpdate, event_listener::<In, Out>);
     }
 }
 
-fn update_system<M: Message>(mut wasm: ResMut<WasmResource<M>>, mut events: EventWriter<M>) {
+fn update_system<In: Message, Out: Message>(
+    mut wasm: ResMut<WasmResource<In, Out>>,
+    mut events: EventWriter<Out>,
+) {
     for runtime in wasm.runtimes.iter_mut() {
         let update: TypedFunc<i32, ()> = runtime
             .instance
@@ -246,6 +293,17 @@ fn update_system<M: Message>(mut wasm: ResMut<WasmResource<M>>, mut events: Even
         let events_out = std::mem::take(&mut runtime.store.data_mut().events_out);
         for event in events_out {
             events.send(event);
+        }
+    }
+}
+
+fn event_listener<In: Message, Out: Message>(
+    mut wasm: ResMut<WasmResource<In, Out>>,
+    mut events: EventReader<In>,
+) {
+    for event in events.iter() {
+        for runtime in wasm.runtimes.iter_mut() {
+            runtime.store.data_mut().events_in.push_back(event.clone());
         }
     }
 }
