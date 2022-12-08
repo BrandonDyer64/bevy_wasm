@@ -1,24 +1,28 @@
 use bevy_app::{App, Plugin};
-use bevy_ecs::system::{Commands, ResMut, Resource};
-use bevy_log::{info, trace};
+use bevy_ecs::system::{ResMut, Resource};
+use bevy_log::info;
 use wasmtime::*;
 
 struct State {
     app_ptr: i32,
 }
 
-#[derive(Resource)]
-struct WasmResource {
+struct WasmRuntime {
     instance: Instance,
     store: Store<State>,
 }
 
-pub struct WasmPlugin(pub &'static [u8]);
+#[derive(Resource)]
+pub struct WasmResource {
+    runtimes: Vec<WasmRuntime>,
+    linker: Linker<State>,
+    engine: Engine,
+}
 
-impl Plugin for WasmPlugin {
-    fn build(&self, app: &mut App) {
+impl WasmResource {
+    pub fn new() -> Self {
         let engine = Engine::default();
-        let mut linker = Linker::new(&engine);
+        let mut linker: Linker<State> = Linker::new(&engine);
         linker
             .func_wrap(
                 "host",
@@ -98,32 +102,51 @@ impl Plugin for WasmPlugin {
                 },
             )
             .unwrap();
-        let module = Module::new(&engine, self.0).unwrap();
-        let mut store = Store::new(&engine, State { app_ptr: 0 });
-        linker.module(&mut store, "", &module).unwrap();
-        let instance = linker.instantiate(&mut store, &module).unwrap();
+        WasmResource {
+            runtimes: vec![],
+            linker,
+            engine,
+        }
+    }
 
-        app.insert_resource(WasmResource { instance, store })
-            .add_startup_system(startup_system)
-            .add_system(update_system);
+    pub fn insert_wasm(&mut self, wasm_bytes: impl AsRef<[u8]>) {
+        // Create store and instance
+        let module = Module::new(&self.engine, wasm_bytes).unwrap();
+        let mut store = Store::new(&self.engine, State { app_ptr: 0 });
+        self.linker.module(&mut store, "", &module).unwrap();
+        let instance = self.linker.instantiate(&mut store, &module).unwrap();
+
+        // Call wasm::build_app
+        let build_app: TypedFunc<(), ()> =
+            instance.get_typed_func(&mut store, "build_app").unwrap();
+        build_app.call(&mut store, ()).unwrap();
+
+        // Add the new runtime to the resource
+        self.runtimes.push(WasmRuntime { instance, store });
     }
 }
 
-fn startup_system(wasm: ResMut<WasmResource>) {
-    let resource = wasm.into_inner();
-    let build_app: TypedFunc<(), ()> = resource
-        .instance
-        .get_typed_func(&mut resource.store, "build_app")
-        .unwrap();
-    build_app.call(&mut resource.store, ()).unwrap();
+pub struct WasmPlugin(pub Vec<Box<[u8]>>);
+
+impl Plugin for WasmPlugin {
+    fn build(&self, app: &mut App) {
+        let mut wasm_resource = WasmResource::new();
+
+        for wasm_bytes in &self.0 {
+            wasm_resource.insert_wasm(wasm_bytes);
+        }
+
+        app.insert_resource(wasm_resource).add_system(update_system);
+    }
 }
 
-fn update_system(wasm: ResMut<WasmResource>) {
-    let resource = wasm.into_inner();
-    let update: TypedFunc<i32, ()> = resource
-        .instance
-        .get_typed_func(&mut resource.store, "update")
-        .unwrap();
-    let app_ptr = resource.store.data().app_ptr;
-    update.call(&mut resource.store, app_ptr).unwrap();
+fn update_system(mut wasm: ResMut<WasmResource>) {
+    for runtime in wasm.runtimes.iter_mut() {
+        let update: TypedFunc<i32, ()> = runtime
+            .instance
+            .get_typed_func(&mut runtime.store, "update")
+            .unwrap();
+        let app_ptr = runtime.store.data().app_ptr;
+        update.call(&mut runtime.store, app_ptr).unwrap();
+    }
 }
