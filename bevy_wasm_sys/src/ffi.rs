@@ -9,8 +9,11 @@ extern "C" {
     pub fn console_info(msg: *const u8, len: usize);
     pub fn console_warn(msg: *const u8, len: usize);
     pub fn console_error(msg: *const u8, len: usize);
+    pub fn send_serialized_event(event: *const u8, len: usize);
+    // pub fn get_next_event(event: *const u8, len: usize) -> i32;
 }
 
+#[cfg(feature = "bevy")]
 #[no_mangle]
 pub unsafe extern "C" fn update(app: *mut c_void) {
     let app = app as *mut App;

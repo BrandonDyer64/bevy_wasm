@@ -10,3 +10,4 @@ crate-type = ["cdylib"]
 [dependencies]
 bevy_ecs = "0.9"
 bevy_wasm_sys = {path = "../../../bevy_wasm_sys"}
+serde = "1.0"
