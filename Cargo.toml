@@ -1,0 +1,25 @@
+[package]
+categories = ["wasm", "game-development"]
+description = "Run WASM systems in Bevy"
+edition = "2021"
+keywords = ["bevy", "wasm", "webassembly", "game", "gamedev"]
+license = "Apache-2.0 WITH LLVM-exception"
+name = "bevy_wasm"
+readme = "README.md"
+repository = "https://github.com/BrandonDyer64/bevy_wasm"
+version = "0.1.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bevy_app = "0.9"
+bevy_ecs = "0.9"
+bevy_log = "0.9"
+wasmtime = "3"
+
+[workspace]
+members = [
+  "bevy_wasm_sys",
+  "examples/simple",
+  "examples/simple/scripts",
+]

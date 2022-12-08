@@ -1,0 +1,13 @@
+[package]
+build = "build.rs"
+edition = "2021"
+name = "simple"
+publish = false
+version = "0.1.0"
+
+[dependencies]
+bevy = "0.9"
+bevy_wasm = {path = "../../."}
+
+[dev-dependencies]
+scripts = {path = "./scripts"}
