@@ -3,10 +3,18 @@ members = [
   "bevy_wasm",
   "bevy_wasm_sys",
   "examples/cubes/cubes",
-  "examples/cubes/cubes-protocol",
-  "examples/cubes/mod-with-bevy",
-  "examples/cubes/mod-without-bevy",
+  "examples/cubes/cubes_protocol",
+  "examples/cubes/mod_with_bevy",
+  "examples/cubes/mod_without_bevy",
   "examples/simple",
   "examples/simple/scripts",
   "examples/simple/simple-protocol",
 ]
+resolver = "2"
+
+[profile.release-wasm]
+inherits = "release"
+lto = true
+opt-level = 's'
+panic = "abort"
+strip = true

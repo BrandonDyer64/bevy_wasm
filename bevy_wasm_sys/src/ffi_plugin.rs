@@ -3,12 +3,17 @@
 use std::ffi::c_void;
 
 use bevy_app::{App, CoreStage, Plugin};
-use bevy_ecs::prelude::{EventReader, EventWriter};
+use bevy_ecs::{
+    prelude::{EventReader, EventWriter},
+    schedule::IntoSystemDescriptor,
+    system::ResMut,
+};
 use serde::{de::DeserializeOwned, Serialize};
 
 use crate::{
     events::{get_next_event, send_event},
     ffi::store_app,
+    time::Time,
 };
 
 /// An object that can be used as a message
@@ -38,6 +43,8 @@ impl<In: Message, Out: Message> Plugin for FFIPlugin<In, Out> {
         app.set_runner(app_runner)
             .add_event::<In>()
             .add_event::<Out>()
+            .insert_resource(Time::new())
+            .add_system_to_stage(CoreStage::First, update_time.at_start())
             .add_system_to_stage(CoreStage::PreUpdate, event_listener::<In>)
             .add_system_to_stage(CoreStage::PostUpdate, event_sender::<Out>);
     }
@@ -61,4 +68,8 @@ fn app_runner(mut app: App) {
     let app_ptr = Box::into_raw(app);
     let app_ptr = app_ptr as *const c_void;
     unsafe { store_app(app_ptr) };
+}
+
+fn update_time(mut time: ResMut<Time>) {
+    time.update();
 }

@@ -1,0 +1,16 @@
+[package]
+edition = "2021"
+name = "mod_without_bevy"
+publish = false
+version = "0.1.0"
+
+[lib]
+# Generate a `.wasm` file instead of a dll
+crate-type = ["cdylib"]
+
+[dependencies]
+cubes_protocol = {path = "../cubes_protocol"}
+
+[dependencies.bevy_wasm_sys]
+default-features = false # <- because we don't want any Bevy stuff
+path = "../../../bevy_wasm_sys"

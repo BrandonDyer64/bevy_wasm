@@ -14,19 +14,25 @@ pub fn send_event<T: Serialize>(event: &T) {
 
 /// Get the next event from the host.
 pub fn get_next_event<T: DeserializeOwned>() -> Option<T> {
-    unsafe {
-        let mut event_arena: Vec<u8> = vec![0; 1024];
-        let len = crate::ffi::get_next_event(event_arena.as_mut_ptr(), event_arena.len());
+    let mut buffer: Vec<u8> = vec![0; 1024];
+    let event = unsafe {
+        let len = crate::ffi::get_next_event(buffer.as_mut_ptr(), buffer.len());
         if len == 0 {
             return None;
         }
-        let event = match bincode::deserialize(&event_arena[..len]) {
+        if len > buffer.len() {
+            error!("Serialized event is larger than buffer");
+            return None;
+        }
+        let event = match bincode::deserialize(&buffer[..len]) {
             Ok(event) => event,
             Err(err) => {
-                error!("Failed to deserialize event: {}", err);
+                error!("Failed to deserialize event from host: {}", err);
                 return None;
             }
         };
-        Some(event)
-    }
+        event
+    };
+    std::mem::drop(buffer); // Ensure the `unsafe` shenanigans don't stop buffer from being dropped
+    Some(event)
 }

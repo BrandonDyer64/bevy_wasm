@@ -4,6 +4,7 @@
 
 use std::ffi::c_void;
 
+#[cfg(feature = "bevy")]
 use bevy_app::App;
 
 #[link(wasm_import_module = "host")]
@@ -15,6 +16,8 @@ extern "C" {
     pub fn console_error(msg: *const u8, len: usize);
     pub fn send_serialized_event(event: *const u8, len: usize);
     pub fn get_next_event(event: *const u8, len: usize) -> usize;
+    /// Nanoseconds since the mod was loaded
+    pub fn get_time_since_startup() -> u64;
 }
 
 #[cfg(feature = "bevy")]

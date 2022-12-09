@@ -8,8 +8,6 @@ fn main() {
     App::new()
         .add_plugin(LogPlugin::default())
         .add_plugins(MinimalPlugins)
-        .add_event::<HostMessage>()
-        .add_event::<ModMessage>()
         .add_plugin(WasmPlugin::<HostMessage, ModMessage>::new(vec![
             SCRIPTS_WASM.into(),
         ]))

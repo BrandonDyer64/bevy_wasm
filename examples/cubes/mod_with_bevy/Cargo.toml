@@ -1,0 +1,17 @@
+[package]
+edition = "2021"
+name = "mod_with_bevy"
+publish = false
+version = "0.1.0"
+
+[lib]
+# Generate a `.wasm` file instead of a dll
+crate-type = ["cdylib"]
+
+[dependencies]
+bevy_ecs = "0.9"
+cubes_protocol = {path = "../cubes_protocol"}
+
+[dependencies.bevy_wasm_sys]
+default-features = true # <- because we will be using Bevy's ECS
+path = "../../../bevy_wasm_sys"
