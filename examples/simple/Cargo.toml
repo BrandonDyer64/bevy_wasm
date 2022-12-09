@@ -7,8 +7,8 @@ version = "0.1.0"
 
 [dependencies]
 bevy = "0.9"
-bevy_wasm = {path = "../../."}
-protocol = {path = "./protocol"}
+bevy_wasm = {path = "../../bevy_wasm"}
+simple-protocol = {path = "./simple-protocol"}
 
 [dev-dependencies]
 scripts = {path = "./scripts"}

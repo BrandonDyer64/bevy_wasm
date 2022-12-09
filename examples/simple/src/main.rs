@@ -1,6 +1,6 @@
 use bevy::{log::LogPlugin, prelude::*};
 use bevy_wasm::*;
-use protocol::{HostMessage, ModMessage};
+use simple_protocol::{HostMessage, ModMessage};
 
 pub static SCRIPTS_WASM: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/scripts.wasm"));
 

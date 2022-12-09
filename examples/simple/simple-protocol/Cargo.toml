@@ -1,6 +1,6 @@
 [package]
 edition = "2021"
-name = "protocol"
+name = "simple-protocol"
 publish = false
 version = "0.1.0"
 

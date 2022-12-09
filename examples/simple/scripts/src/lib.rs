@@ -1,5 +1,5 @@
 use bevy_wasm_sys::{info, prelude::*};
-use protocol::{HostMessage, ModMessage};
+use simple_protocol::{HostMessage, ModMessage};
 
 #[no_mangle]
 pub unsafe extern "C" fn build_app() {

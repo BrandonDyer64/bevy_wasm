@@ -1,0 +1,9 @@
+[package]
+edition = "2021"
+name = "cubes"
+publish = false
+version = "0.1.0"
+
+[dependencies]
+bevy = "0.9"
+bevy_wasm = {path = "../../../bevy_wasm"}
