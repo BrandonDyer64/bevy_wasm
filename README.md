@@ -38,8 +38,8 @@ use my_games_protocol::{GameMessage, ModMessage};
 
 fn main() {
     let startup_mods = vec![
-        include_bytes!("some_mod.wasm"),
-        include_bytes!("some_other_mod.wasm"),
+        include_bytes!("some_mod.wasm").into(),
+        include_bytes!("some_other_mod.wasm").into(),
     ];
 
     App::build()
@@ -96,3 +96,18 @@ fn send_messages_to_game(mut events: EventWriter<ModMessage>) {
     events.send(ModMessage::Hello);
 }
 ```
+
+## Roadmap
+
+|     |                                                  |
+| --- | ------------------------------------------------ |
+| ✅  | wasmtime runtime in games                        |
+| ✅  | Send messages from mods to game                  |
+| ✅  | Send messages from game to mods                  |
+| ✅  | Multi-mod support                                |
+| ✅  | Time keeping                                     |
+| ⬜  | Protocol version checking                        |
+| ⬜  | Custom FFI                                       |
+| ⬜  | Mod discrimination (events aren't broadcast all) |
+| ⬜  | Automatic component syncing                      |
+| ⬜  | Direct update control                            |
