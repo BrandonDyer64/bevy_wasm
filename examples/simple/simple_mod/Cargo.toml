@@ -1,6 +1,6 @@
 [package]
 edition = "2021"
-name = "scripts"
+name = "simple_mod"
 version = "0.1.0"
 
 [lib]
@@ -11,4 +11,4 @@ crate-type = ["cdylib"]
 bevy_ecs = "0.9"
 bevy_wasm_sys = {path = "../../../bevy_wasm_sys"}
 serde = "1.0"
-simple-protocol = {path = "../simple-protocol"}
+simple_protocol = {path = "../simple_protocol"}

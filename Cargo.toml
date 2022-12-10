@@ -6,9 +6,9 @@ members = [
   "examples/cubes/cubes_protocol",
   "examples/cubes/mod_with_bevy",
   "examples/cubes/mod_without_bevy",
-  "examples/simple",
-  "examples/simple/scripts",
-  "examples/simple/simple-protocol",
+  "examples/simple/simple",
+  "examples/simple/simple_mod",
+  "examples/simple/simple_protocol",
 ]
 resolver = "2"
 

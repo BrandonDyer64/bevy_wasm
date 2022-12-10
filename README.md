@@ -33,8 +33,8 @@ Our game will import `WasmPlugin` from [`bevy_wasm`](https://crates.io/crates/be
 
 ```rust
 use bevy::prelude::*;
-use bevy_wasm::WasmPlugin;
-use my_games_protocol::{GameMessage, ModMessage};
+use bevy_wasm::prelude::*;
+use my_game_protocol::{GameMessage, ModMessage};
 
 fn main() {
     let startup_mods = vec![
@@ -42,7 +42,7 @@ fn main() {
         include_bytes!("some_other_mod.wasm").into(),
     ];
 
-    App::build()
+    App::new()
         .add_plugins(DefaultPlugins)
         .add_plugin(WasmPlugin::<GameMessage, ModMessage>::new(startup_mods))
         .add_system(listen_for_mod_messages)
@@ -71,12 +71,12 @@ Our mod will import `FFIPlugin` from [`bevy_wasm_sys`](https://crates.io/crates/
 
 ```rust
 use bevy_wasm_sys::prelude::*;
-use my_games_protocol::{GameMessage, ModMessage};
+use my_game_protocol::{GameMessage, ModMessage};
 
 #[no_mangle]
 pub unsafe extern "C" fn build_app() {
     App::new()
-        .add_plugin(FFIPlugin::<GameMessage, ModMessage>::default())
+        .add_plugin(FFIPlugin::<GameMessage, ModMessage>::new())
         .add_system(listen_for_game_messages)
         .add_system(send_messages_to_game)
         .run();

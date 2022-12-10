@@ -364,3 +364,8 @@ fn build_linker<In: Message, Out: Message>(engine: &Engine) -> Linker<State<In, 
         .unwrap();
     linker
 }
+
+/// Convinience exports
+pub mod prelude {
+    pub use crate::{Message, WasmPlugin};
+}

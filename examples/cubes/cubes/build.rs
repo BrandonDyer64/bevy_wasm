@@ -13,7 +13,6 @@ fn build_wasm_pkg(name: &str) {
     let out_dir = std::env::var("OUT_DIR").unwrap();
     let dest_path = std::path::Path::new(&out_dir);
     let status = Command::new("cargo")
-        // .arg("+nightly")
         .args(&["build"])
         .args(&["--profile", "release-wasm"])
         .args(&["--package", name])
@@ -26,7 +25,6 @@ fn build_wasm_pkg(name: &str) {
                 .to_str()
                 .unwrap(),
         ])
-        // .args(&["-Z", "unstable-options"])
         .status()
         .unwrap();
     assert!(status.success());
