@@ -109,5 +109,8 @@ fn send_messages_to_game(mut events: EventWriter<ModMessage>) {
 | ⬜  | Protocol version checking                        |
 | ⬜  | Custom FFI                                       |
 | ⬜  | Mod discrimination (events aren't broadcast all) |
-| ⬜  | Automatic component syncing                      |
+| ⬜  | Mod unloading                                    |
 | ⬜  | Direct update control                            |
+| ⬜  | Mod hotloading                                   |
+| ⬜  | Automatic component syncing                      |
+| ⬜  | Browser support                                  |
