@@ -25,6 +25,8 @@ pub mod prelude {
 
     #[cfg(feature = "bevy")]
     pub use {
-        crate::ffi_plugin::FFIPlugin, crate::time::Time, bevy_app::prelude::*, bevy_ecs::prelude::*,
+        crate::ffi_plugin::FFIPlugin, crate::time::Time, bevy_app::prelude::*, bevy_derive::*,
+        bevy_ecs::prelude::*, bevy_math::prelude::*, bevy_reflect::prelude::*,
+        bevy_transform::prelude::*,
     };
 }

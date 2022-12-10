@@ -1,4 +1,4 @@
-use bevy_wasm_sys::{info, prelude::*};
+use bevy_wasm_sys::prelude::*;
 use cubes_protocol::{HostMessage, ModMessage};
 
 const MOD_STATE: u64 = 0xa6e79eb9; // Should be unique to each mod

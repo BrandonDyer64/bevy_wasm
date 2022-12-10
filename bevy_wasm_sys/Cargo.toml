@@ -10,12 +10,15 @@ repository = "https://github.com/BrandonDyer64/bevy_wasm"
 version = "0.1.4"
 
 [features]
-bevy = ["bevy_app", "bevy_ecs"]
+bevy = ["bevy_app", "bevy_derive", "bevy_ecs", "bevy_math", "bevy_reflect", "bevy_transform"]
 default = ["bevy"]
 
 [dependencies]
 bevy_app = {version = "0.9", optional = true}
 bevy_derive = {version = "0.9", optional = true}
 bevy_ecs = {version = "0.9", optional = true}
+bevy_math = {version = "0.9", optional = true}
+bevy_reflect = {version = "0.9", optional = true}
+bevy_transform = {version = "0.9", optional = true, features = ["serialize"]}
 bincode = "1.3"
 serde = "1.0"
