@@ -32,8 +32,9 @@ pub struct FFIPlugin<In: Message, Out: Message>(
     std::marker::PhantomData<Out>,
 );
 
-impl<In: Message, Out: Message> Default for FFIPlugin<In, Out> {
-    fn default() -> Self {
+impl<In: Message, Out: Message> FFIPlugin<In, Out> {
+    /// Create a new FFIPlugin instance to insert into a Bevy `App`
+    pub fn new() -> Self {
         Self(std::marker::PhantomData, std::marker::PhantomData)
     }
 }

@@ -5,7 +5,7 @@ use simple_protocol::{HostMessage, ModMessage};
 pub unsafe extern "C" fn build_app() {
     info!("Hello from build_app inside wasm!");
     App::new()
-        .add_plugin(FFIPlugin::<HostMessage, ModMessage>::default())
+        .add_plugin(FFIPlugin::<HostMessage, ModMessage>::new())
         .add_startup_system(startup_system)
         .add_system(update_resource)
         .add_system(send_a_message)

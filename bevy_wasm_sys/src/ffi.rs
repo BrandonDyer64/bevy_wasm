@@ -1,4 +1,4 @@
-//! FFI functions for communicating with the host.
+//! FFI declarations for communicating with the host.
 
 #![allow(missing_docs)]
 

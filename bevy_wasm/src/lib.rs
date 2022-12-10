@@ -15,6 +15,7 @@ use bevy_ecs::{
     system::{ResMut, Resource},
 };
 use bevy_log::{error, info, warn};
+use colored::*;
 use serde::{de::DeserializeOwned, Serialize};
 use wasmtime::*;
 
@@ -27,11 +28,19 @@ pub trait Message: Send + Sync + Serialize + DeserializeOwned + Clone + 'static 
 
 impl<T> Message for T where T: Send + Sync + Serialize + DeserializeOwned + Clone + 'static {}
 
-struct State<In: Message, Out: Message> {
-    startup_time: Instant,
-    app_ptr: i32,
-    events_in: VecDeque<In>,
-    events_out: Vec<Out>,
+/// Internal mod state
+pub struct State<In: Message, Out: Message> {
+    /// Time when the mod was loaded
+    pub startup_time: Instant,
+
+    /// Pointer given to us in `store_app`
+    pub app_ptr: i32,
+
+    /// Events that have been sent to the mod
+    pub events_in: VecDeque<In>,
+
+    /// Events that have been sent to the host
+    pub events_out: Vec<Out>,
 }
 
 struct WasmRuntime<In: Message, Out: Message> {
@@ -97,20 +106,24 @@ impl<In: Message, Out: Message> WasmResource<In, Out> {
 ///
 /// Give [`WasmPlugin::new`] a list of wasm files to load at startup.
 /// Further mods can be added at any time with [`WasmResource::insert_wasm`].
-pub struct WasmPlugin<In: Message, Out: Message>(
-    Vec<Box<[u8]>>,
-    std::marker::PhantomData<In>,
-    std::marker::PhantomData<Out>,
-);
+pub struct WasmPlugin<In, Out>
+where
+    In: Message,
+    Out: Message,
+{
+    wasm_bytes: Vec<Box<[u8]>>,
+    _in: std::marker::PhantomData<In>,
+    _out: std::marker::PhantomData<Out>,
+}
 
 impl<In: Message, Out: Message> WasmPlugin<In, Out> {
     /// Create a WasmPlugin with a list of wasm files to load at startup
     pub fn new(wasm_bytes: Vec<Box<[u8]>>) -> Self {
-        WasmPlugin(
+        WasmPlugin {
             wasm_bytes,
-            std::marker::PhantomData,
-            std::marker::PhantomData,
-        )
+            _in: std::marker::PhantomData,
+            _out: std::marker::PhantomData,
+        }
     }
 }
 
@@ -118,7 +131,7 @@ impl<In: Message, Out: Message> Plugin for WasmPlugin<In, Out> {
     fn build(&self, app: &mut App) {
         let mut wasm_resource = WasmResource::<In, Out>::new();
 
-        for wasm_bytes in &self.0 {
+        for wasm_bytes in &self.wasm_bytes {
             wasm_resource.insert_wasm(wasm_bytes);
         }
 
@@ -177,7 +190,7 @@ fn build_linker<In: Message, Out: Message>(engine: &Engine) -> Linker<State<In, 
                     .and_then(|arr| arr.get(..len as u32 as usize))
                     .unwrap();
                 let string = std::str::from_utf8(data).unwrap();
-                info!("{}", string);
+                info!("{} {}", "MOD".yellow(), string);
             },
         )
         .unwrap();
@@ -197,7 +210,7 @@ fn build_linker<In: Message, Out: Message>(engine: &Engine) -> Linker<State<In, 
                     .and_then(|arr| arr.get(..len as u32 as usize))
                     .unwrap();
                 let string = std::str::from_utf8(data).unwrap();
-                warn!("{}", string);
+                warn!("{} {}", "MOD".yellow(), string);
             },
         )
         .unwrap();
@@ -217,7 +230,7 @@ fn build_linker<In: Message, Out: Message>(engine: &Engine) -> Linker<State<In, 
                     .and_then(|arr| arr.get(..len as u32 as usize))
                     .unwrap();
                 let string = std::str::from_utf8(data).unwrap();
-                error!("{}", string);
+                error!("{} {}", "MOD".yellow(), string);
             },
         )
         .unwrap();
@@ -227,7 +240,7 @@ fn build_linker<In: Message, Out: Message>(engine: &Engine) -> Linker<State<In, 
             "store_app",
             |mut caller: Caller<'_, State<In, Out>>, app_ptr: i32| {
                 caller.data_mut().app_ptr = app_ptr;
-                info!("Storing app pointer: {:X}", app_ptr);
+                info!("{} 0x{:X}", "Storing app pointer:".italic(), app_ptr);
             },
         )
         .unwrap();

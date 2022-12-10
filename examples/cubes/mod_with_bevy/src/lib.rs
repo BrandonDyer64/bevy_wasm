@@ -7,7 +7,7 @@ const MOD_STATE: u64 = 0xa6e79eb9; // Should be unique to each mod
 pub unsafe extern "C" fn build_app() {
     info!("Hello from build_app inside mod_with_bevy!");
     App::new()
-        .add_plugin(FFIPlugin::<HostMessage, ModMessage>::default())
+        .add_plugin(FFIPlugin::<HostMessage, ModMessage>::new())
         .add_startup_system(startup_system)
         .add_system(update_cube)
         .add_system(listen_for_message)
