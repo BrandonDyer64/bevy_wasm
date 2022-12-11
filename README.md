@@ -1,15 +1,24 @@
-# bevy_wasm & bevy_wasm_sys
+# Bevy WASM
 
 Mod your Bevy games with WebAssembly!
 
-- `bevy_wasm` : For games [![](https://img.shields.io/crates/v/bevy_wasm.svg)][https://crates.io/crates/bevy_wasm] [![](https://docs.rs/bevy_wasm/badge.svg)][https://docs.rs/bevy_wasm]
-- `bevy_wasm_sys` : For mods [![](https://img.shields.io/crates/v/bevy_wasm_sys.svg)][https://crates.io/crates/bevy_wasm_sys] [![](https://docs.rs/bevy_wasm_sys/badge.svg)][https://docs.rs/bevy_wasm_sys]
+|                    |                                                                                                                                                                                            |               |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------- |
+| `bevy_wasm`        | [![](https://img.shields.io/crates/v/bevy_wasm.svg)](https://crates.io/crates/bevy_wasm) [![](https://docs.rs/bevy_wasm/badge.svg)](https://docs.rs/bevy_wasm)                             | For games     |
+| `bevy_wasm_sys`    | [![](https://img.shields.io/crates/v/bevy_wasm_sys.svg)](https://crates.io/crates/bevy_wasm_sys) [![](https://docs.rs/bevy_wasm_sys/badge.svg)](https://docs.rs/bevy_wasm_sys)             | For mods      |
+| `bevy_wasm_shared` | [![](https://img.shields.io/crates/v/bevy_wasm_shared.svg)](https://crates.io/crates/bevy_wasm_shared) [![](https://docs.rs/bevy_wasm_shared/badge.svg)](https://docs.rs/bevy_wasm_shared) | For protocols |
 
 See [examples/cubes](https://github.com/BrandonDyer64/bevy_wasm/tree/main/examples/cubes) for a comprehensive example of how to use this.
 
 ## Protocol
 
 Our protocol crate defines the two message types for communicating between the game and mods.
+
+```toml
+[dependencies]
+bevy_wasm_shared = "0.9"
+serde = { version = "1.0", features = ["derive"] }
+```
 
 ```rust
 use serde::{Deserialize, Serialize};
@@ -34,6 +43,13 @@ pub enum GameMessage {
 ## Game
 
 Our game will import `WasmPlugin` from [`bevy_wasm`](https://crates.io/crates/bevy_wasm), and use it to automatically send and receive messages with the mods.
+
+```toml
+[dependencies]
+bevy = "0.9"
+bevy_wasm = "0.9"
+my_game_protocol = { git = "https://github.com/username/my_game_protocol" }
+```
 
 ```rust
 use bevy::prelude::*;
@@ -71,6 +87,12 @@ fn send_messages_to_mods(mut events: EventWriter<GameMessage>) {
 ## Mod
 
 Our mod will import `FFIPlugin` from [`bevy_wasm_sys`](https://crates.io/crates/bevy_wasm_sys), and use it to automatically send and receive messages with the game.
+
+```toml
+[dependencies]
+bevy_wasm_sys = "0.9"
+my_game_protocol = { git = "https://github.com/username/my_game_protocol" }
+```
 
 ```rust
 use bevy_wasm_sys::prelude::*;
