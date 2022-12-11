@@ -13,6 +13,7 @@ const MOD_STATE: u64 = 0xf6a11546; // Should be unique to each mod
 struct AppState {
     entity_id: Option<u32>,
     x: f32,
+    y: f32,
 }
 
 #[no_mangle]
@@ -21,6 +22,7 @@ pub unsafe extern "C" fn build_app() {
     let app_state = AppState {
         entity_id: None,
         x: 0.0,
+        y: 0.0,
     };
 
     send_event(&ModMessage::SpawnCube {
@@ -44,7 +46,10 @@ pub unsafe extern "C" fn update(app_state: *mut c_void) {
 fn update_app_state(app_state: &mut AppState) {
     let time_since_start = unsafe { Duration::from_nanos(ffi::get_time_since_startup()) };
 
-    app_state.x = time_since_start.as_secs_f32().cos();
+    let time: f32 = time_since_start.as_secs_f32() + std::f32::consts::PI;
+
+    app_state.y = time.sin() + 1.5;
+    app_state.x = -time.cos();
 
     while let Some(event) = get_next_event::<HostMessage>() {
         match event {
@@ -63,7 +68,7 @@ fn update_app_state(app_state: &mut AppState) {
     send_event(&ModMessage::MoveCube {
         entity_id,
         x: app_state.x,
-        y: 1.5,
+        y: app_state.y,
         z: 0.0,
     });
 }

@@ -43,8 +43,10 @@ fn update_cube(
     time: Res<Time>,
     mut events: EventWriter<ModMessage>,
 ) {
-    // Move the cube up
-    resource.y = time.elapsed_seconds().sin() + 1.5;
+    let time: f32 = time.elapsed_seconds();
+    // Move the cube in a circle
+    resource.y = time.sin() + 1.5;
+    resource.x = -time.cos();
 
     // Ensure the cube has been spawned on the host
     let entity_id = match resource.entity_id {
