@@ -8,11 +8,14 @@ use bevy_ecs::{
     schedule::IntoSystemDescriptor,
     system::ResMut,
 };
+use bevy_wasm_shared::prelude::*;
 use serde::{de::DeserializeOwned, Serialize};
 
 use crate::{
+    error,
     events::{get_next_event, send_event},
     ffi::store_app,
+    info,
     time::Time,
 };
 
@@ -27,20 +30,66 @@ impl<T> Message for T where T: Send + Sync + Serialize + DeserializeOwned + 'sta
 ///
 /// - In: Message type going from host to mod
 /// - Out: Message type going from mod to host
-pub struct FFIPlugin<In: Message, Out: Message>(
-    std::marker::PhantomData<In>,
-    std::marker::PhantomData<Out>,
-);
+pub struct FFIPlugin<In: Message, Out: Message> {
+    protocol_version: Version,
+    protocol_version_checker: Box<dyn Fn(Version, Version) -> bool + Send + Sync + 'static>,
+    _in: std::marker::PhantomData<In>,
+    _out: std::marker::PhantomData<Out>,
+}
 
 impl<In: Message, Out: Message> FFIPlugin<In, Out> {
     /// Create a new FFIPlugin instance to insert into a Bevy `App`
-    pub fn new() -> Self {
-        Self(std::marker::PhantomData, std::marker::PhantomData)
+    pub fn new(protocol_version: Version) -> Self {
+        info!(
+            "Starting mod with protocol version {}.{}.{}",
+            protocol_version.major, protocol_version.minor, protocol_version.patch
+        );
+        Self {
+            protocol_version,
+            protocol_version_checker: Box::new(|host_version, mod_version| {
+                (true)
+                // Check that the names match
+                && host_version.name_hash == mod_version.name_hash
+                // Check that the major versions match
+                && host_version.major == mod_version.major
+            }),
+            _in: std::marker::PhantomData,
+            _out: std::marker::PhantomData,
+        }
+    }
+
+    /// Set a custom protocol version checker to ensure your mod is compatible with the game
+    ///
+    /// The default version checker only ensures the major versions match.
+    ///
+    /// i.e. `1.0.0` is compatible with `1.1.0` but not `2.0.0`
+    pub fn with_version_checker<F>(self, checker: F) -> Self
+    where
+        F: Fn(Version, Version) -> bool + Send + Sync + 'static,
+    {
+        Self {
+            protocol_version_checker: Box::new(checker),
+            ..self
+        }
     }
 }
 
 impl<In: Message, Out: Message> Plugin for FFIPlugin<In, Out> {
     fn build(&self, app: &mut App) {
+        let host_version = unsafe { crate::ffi::get_protocol_version() };
+        let host_version = Version::from_u64(host_version);
+        if !(*self.protocol_version_checker)(self.protocol_version, host_version) {
+            error!(
+                "Protocol version incompatible! Host: {}.{}.{}, Mod: {}.{}.{}",
+                host_version.major,
+                host_version.minor,
+                host_version.patch,
+                self.protocol_version.major,
+                self.protocol_version.minor,
+                self.protocol_version.patch
+            );
+            return;
+        }
         app.set_runner(app_runner)
             .add_event::<In>()
             .add_event::<Out>()

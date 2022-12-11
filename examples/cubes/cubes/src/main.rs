@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_wasm::*;
-use cubes_protocol::{HostMessage, ModMessage};
+use cubes_protocol::{HostMessage, ModMessage, PROTOCOL_VERSION};
 
 pub static MOD_1_WASM: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/mod_with_bevy.wasm"));
 pub static MOD_2_WASM: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/mod_without_bevy.wasm"));
@@ -8,10 +8,11 @@ pub static MOD_2_WASM: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/mod_wit
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .add_plugin(WasmPlugin::<HostMessage, ModMessage>::new(vec![
-            MOD_1_WASM.into(),
-            MOD_2_WASM.into(),
-        ]))
+        .add_plugin(
+            WasmPlugin::<HostMessage, ModMessage>::new(PROTOCOL_VERSION)
+                .with_mod(MOD_1_WASM)
+                .with_mod(MOD_2_WASM),
+        )
         .add_startup_system(setup)
         .add_system(update_cubes_from_mods)
         .run();

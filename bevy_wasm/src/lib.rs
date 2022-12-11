@@ -15,6 +15,7 @@ use bevy_ecs::{
     system::{ResMut, Resource},
 };
 use bevy_log::{error, info, warn};
+use bevy_wasm_shared::prelude::*;
 use colored::*;
 use serde::{de::DeserializeOwned, Serialize};
 use wasmtime::*;
@@ -55,15 +56,17 @@ struct WasmRuntime<In: Message, Out: Message> {
 /// Insert a new mod at any time with [`WasmResource::insert_wasm`].
 #[derive(Resource)]
 pub struct WasmResource<In: Message, Out: Message> {
+    protocol_version: Version,
     runtimes: Vec<WasmRuntime<In, Out>>,
     engine: Engine,
 }
 
 impl<In: Message, Out: Message> WasmResource<In, Out> {
     /// Create a new WasmResource with a default engine
-    pub fn new() -> Self {
+    pub fn new(protocol_version: Version) -> Self {
         let engine = Engine::default();
         WasmResource {
+            protocol_version,
             runtimes: vec![],
             engine,
         }
@@ -82,7 +85,7 @@ impl<In: Message, Out: Message> WasmResource<In, Out> {
                 events_in: VecDeque::new(),
             },
         );
-        let mut linker = build_linker(&self.engine);
+        let mut linker = build_linker(&self.engine, self.protocol_version);
         linker.module(&mut store, "", &module).unwrap();
         let instance = linker.instantiate(&mut store, &module).unwrap();
 
@@ -112,24 +115,46 @@ where
     Out: Message,
 {
     wasm_bytes: Vec<Box<[u8]>>,
+    protocol_version: Version,
     _in: std::marker::PhantomData<In>,
     _out: std::marker::PhantomData<Out>,
 }
 
 impl<In: Message, Out: Message> WasmPlugin<In, Out> {
     /// Create a WasmPlugin with a list of wasm files to load at startup
-    pub fn new(wasm_bytes: Vec<Box<[u8]>>) -> Self {
+    pub fn new(protocol_version: Version) -> Self {
+        info!(
+            "Starting {}{}{}{} {}{}{}{} with protocol version {}.{}.{}",
+            "B".bold().red(),
+            "E".bold().yellow(),
+            "V".bold().green(),
+            "Y".bold().cyan(),
+            "W".bold().blue(),
+            "A".bold().magenta(),
+            "S".bold().red(),
+            "M".bold().yellow(),
+            protocol_version.major,
+            protocol_version.minor,
+            protocol_version.patch,
+        );
         WasmPlugin {
-            wasm_bytes,
+            wasm_bytes: Vec::new(),
+            protocol_version: protocol_version.into(),
             _in: std::marker::PhantomData,
             _out: std::marker::PhantomData,
         }
+    }
+
+    /// Add a wasm file to the plugin
+    pub fn with_mod(mut self, wasm: impl Into<Box<[u8]>>) -> Self {
+        self.wasm_bytes.push(wasm.into());
+        self
     }
 }
 
 impl<In: Message, Out: Message> Plugin for WasmPlugin<In, Out> {
     fn build(&self, app: &mut App) {
-        let mut wasm_resource = WasmResource::<In, Out>::new();
+        let mut wasm_resource = WasmResource::<In, Out>::new(self.protocol_version.clone().into());
 
         for wasm_bytes in &self.wasm_bytes {
             wasm_resource.insert_wasm(wasm_bytes);
@@ -172,7 +197,10 @@ fn event_listener<In: Message, Out: Message>(
     }
 }
 
-fn build_linker<In: Message, Out: Message>(engine: &Engine) -> Linker<State<In, Out>> {
+fn build_linker<In: Message, Out: Message>(
+    engine: &Engine,
+    protocol_version: Version,
+) -> Linker<State<In, Out>> {
     let mut linker: Linker<State<In, Out>> = Linker::new(&engine);
     linker
         .func_wrap(
@@ -190,7 +218,7 @@ fn build_linker<In: Message, Out: Message>(engine: &Engine) -> Linker<State<In, 
                     .and_then(|arr| arr.get(..len as u32 as usize))
                     .unwrap();
                 let string = std::str::from_utf8(data).unwrap();
-                info!("{} {}", "MOD".yellow(), string);
+                info!("{} {}", "MOD".bold().green(), string);
             },
         )
         .unwrap();
@@ -210,7 +238,7 @@ fn build_linker<In: Message, Out: Message>(engine: &Engine) -> Linker<State<In, 
                     .and_then(|arr| arr.get(..len as u32 as usize))
                     .unwrap();
                 let string = std::str::from_utf8(data).unwrap();
-                warn!("{} {}", "MOD".yellow(), string);
+                warn!("{} {}", "MOD".bold().yellow(), string);
             },
         )
         .unwrap();
@@ -230,7 +258,7 @@ fn build_linker<In: Message, Out: Message>(engine: &Engine) -> Linker<State<In, 
                     .and_then(|arr| arr.get(..len as u32 as usize))
                     .unwrap();
                 let string = std::str::from_utf8(data).unwrap();
-                error!("{} {}", "MOD".yellow(), string);
+                error!("{} {}", "MOD".bold().red(), string);
             },
         )
         .unwrap();
@@ -312,6 +340,11 @@ fn build_linker<In: Message, Out: Message>(engine: &Engine) -> Linker<State<In, 
             },
         )
         .unwrap();
+    linker
+        .func_wrap("host", "get_protocol_version", move || -> u64 {
+            protocol_version.to_u64()
+        })
+        .unwrap();
 
     // Because bevy wants to use wasm-bindgen
     linker
@@ -368,4 +401,5 @@ fn build_linker<In: Message, Out: Message>(engine: &Engine) -> Linker<State<In, 
 /// Convinience exports
 pub mod prelude {
     pub use crate::{Message, WasmPlugin};
+    pub use bevy_wasm_shared::prelude::*;
 }

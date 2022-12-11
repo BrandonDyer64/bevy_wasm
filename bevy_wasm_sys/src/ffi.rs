@@ -18,11 +18,16 @@ extern "C" {
     pub fn get_next_event(event: *const u8, len: usize) -> usize;
     /// Nanoseconds since the mod was loaded
     pub fn get_time_since_startup() -> u64;
+    pub fn get_protocol_version() -> u64;
 }
 
 #[cfg(feature = "bevy")]
 #[no_mangle]
 pub unsafe extern "C" fn update(app: *mut c_void) {
+    if app.is_null() {
+        return;
+    }
+
     let app = app as *mut App;
     (*app).update();
 }

@@ -1,4 +1,8 @@
+use bevy_wasm_shared::prelude::*;
 use serde::{Deserialize, Serialize};
+
+/// The version of the protocol. Automatically set from the `CARGO_PKG_XXX` environment variables.
+pub const PROTOCOL_VERSION: Version = version!();
 
 /// Messages passed `Host -> Mod`
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -2,8 +2,8 @@
 
 Mod your Bevy games with WebAssembly!
 
-- [`bevy_wasm`](https://crates.io/crates/bevy_wasm) : For games
-- [`bevy_wasm_sys`](https://crates.io/crates/bevy_wasm_sys) : For mods
+- `bevy_wasm` : For games [![](https://img.shields.io/crates/v/bevy_wasm.svg)][https://crates.io/crates/bevy_wasm] [![](https://docs.rs/bevy_wasm/badge.svg)][https://docs.rs/bevy_wasm]
+- `bevy_wasm_sys` : For mods [![](https://img.shields.io/crates/v/bevy_wasm_sys.svg)][https://crates.io/crates/bevy_wasm_sys] [![](https://docs.rs/bevy_wasm_sys/badge.svg)][https://docs.rs/bevy_wasm_sys]
 
 See [examples/cubes](https://github.com/BrandonDyer64/bevy_wasm/tree/main/examples/cubes) for a comprehensive example of how to use this.
 
@@ -13,6 +13,10 @@ Our protocol crate defines the two message types for communicating between the g
 
 ```rust
 use serde::{Deserialize, Serialize};
+use bevy_wasm_shared::prelude::*;
+
+/// The version of the protocol. Automatically set from the `CARGO_PKG_XXX` environment variables.
+pub const PROTOCOL_VERSION: Version = version!();
 
 /// A message to be sent Mod -> Game.
 #[derive(Clone, Serialize, Deserialize, Debug)]
@@ -34,17 +38,16 @@ Our game will import `WasmPlugin` from [`bevy_wasm`](https://crates.io/crates/be
 ```rust
 use bevy::prelude::*;
 use bevy_wasm::prelude::*;
-use my_game_protocol::{GameMessage, ModMessage};
+use my_game_protocol::{GameMessage, ModMessage, PROTOCOL_VERSION};
 
 fn main() {
-    let startup_mods = vec![
-        include_bytes!("some_mod.wasm").into(),
-        include_bytes!("some_other_mod.wasm").into(),
-    ];
-
     App::new()
         .add_plugins(DefaultPlugins)
-        .add_plugin(WasmPlugin::<GameMessage, ModMessage>::new(startup_mods))
+        .add_plugin(
+            WasmPlugin::<GameMessage, ModMessage>::new(PROTOCOL_VERSION)
+                .with_mod(include_bytes!("some_mod.wasm"))
+                .with_mods(include_bytes!("some_other_mod.wasm"))
+        )
         .add_system(listen_for_mod_messages)
         .add_system(send_messages_to_mods)
         .run();
@@ -71,12 +74,12 @@ Our mod will import `FFIPlugin` from [`bevy_wasm_sys`](https://crates.io/crates/
 
 ```rust
 use bevy_wasm_sys::prelude::*;
-use my_game_protocol::{GameMessage, ModMessage};
+use my_game_protocol::{GameMessage, ModMessage, PROTOCOL_VERSION};
 
 #[no_mangle]
 pub unsafe extern "C" fn build_app() {
     App::new()
-        .add_plugin(FFIPlugin::<GameMessage, ModMessage>::new())
+        .add_plugin(FFIPlugin::<GameMessage, ModMessage>::new(PROTOCOL_VERSION))
         .add_system(listen_for_game_messages)
         .add_system(send_messages_to_game)
         .run();
@@ -106,7 +109,8 @@ fn send_messages_to_game(mut events: EventWriter<ModMessage>) {
 | ✅  | Send messages from game to mods                  |
 | ✅  | Multi-mod support                                |
 | ✅  | Time keeping                                     |
-| ⬜  | Protocol version checking                        |
+| ✅  | Protocol version checking                        |
+| ⬜  | Startup system mod loading                       |
 | ⬜  | Custom FFI                                       |
 | ⬜  | Mod discrimination (events aren't broadcast all) |
 | ⬜  | `AssetServer` support and `Handle<WasmMod>`      |

@@ -1,5 +1,5 @@
 use bevy_wasm_sys::prelude::*;
-use cubes_protocol::{HostMessage, ModMessage};
+use cubes_protocol::{HostMessage, ModMessage, PROTOCOL_VERSION};
 
 const MOD_STATE: u64 = 0xa6e79eb9; // Should be unique to each mod
 
@@ -7,7 +7,7 @@ const MOD_STATE: u64 = 0xa6e79eb9; // Should be unique to each mod
 pub unsafe extern "C" fn build_app() {
     info!("Hello from build_app inside mod_with_bevy!");
     App::new()
-        .add_plugin(FFIPlugin::<HostMessage, ModMessage>::new())
+        .add_plugin(FFIPlugin::<HostMessage, ModMessage>::new(PROTOCOL_VERSION))
         .add_startup_system(startup_system)
         .add_system(update_cube)
         .add_system(listen_for_message)
@@ -24,6 +24,8 @@ struct CubePosition {
 
 fn startup_system(mut commands: Commands, mut events: EventWriter<ModMessage>) {
     info!("Hello from startup_system inside mod!");
+    warn!("This is a warning!");
+    error!("This is an error!");
     commands.insert_resource(CubePosition {
         entity_id: None,
         x: 0.0,
