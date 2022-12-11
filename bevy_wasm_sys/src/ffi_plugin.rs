@@ -112,8 +112,7 @@ fn event_sender<M: Message>(mut events: EventReader<M>) {
     }
 }
 
-fn app_runner(mut app: App) {
-    app.update();
+fn app_runner(app: App) {
     let app = Box::new(app);
     let app_ptr = Box::into_raw(app);
     let app_ptr = app_ptr as *const c_void;
