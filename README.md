@@ -132,6 +132,8 @@ fn send_messages_to_game(mut events: EventWriter<ModMessage>) {
 | ✅  | Multi-mod support                                |
 | ✅  | Time keeping                                     |
 | ✅  | Protocol version checking                        |
+| ⬜  | Extern Resource                                  |
+| ⬜  | Extern Query                                     |
 | ⬜  | Startup system mod loading                       |
 | ⬜  | Custom FFI                                       |
 | ⬜  | Mod discrimination (events aren't broadcast all) |
