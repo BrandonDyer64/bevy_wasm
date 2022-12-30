@@ -143,6 +143,48 @@ pub(crate) fn build_linker<In: Message, Out: Message>(
     linker
         .func_wrap(
             "host",
+            "get_resource",
+            |mut caller: Caller<'_, State<In, Out>>,
+             name: i32,
+             name_len: u32,
+             buffer: i32,
+             buffer_len: u32|
+             -> u32 {
+                let mem = match caller.get_export("memory") {
+                    Some(Extern::Memory(mem)) => mem,
+                    _ => panic!("failed to find host memory"),
+                };
+
+                let name = mem
+                    .data(&caller)
+                    .get(name as u32 as usize..)
+                    .and_then(|arr| arr.get(..name_len as u32 as usize))
+                    .unwrap();
+                let name = std::str::from_utf8(name).unwrap().to_string();
+
+                let resource_bytes = caller.data_mut().shared_resource_values.remove(&name);
+
+                let resource_bytes = match resource_bytes {
+                    Some(resource_bytes) => resource_bytes,
+                    None => return 0,
+                };
+
+                let buffer = mem
+                    .data_mut(&mut caller)
+                    .get_mut(buffer as u32 as usize..)
+                    .and_then(|arr| arr.get_mut(..buffer_len as u32 as usize))
+                    .unwrap();
+
+                let resource_bytes: &[u8] = resource_bytes.as_ref().as_slice();
+
+                buffer[..resource_bytes.len()].copy_from_slice(resource_bytes);
+                resource_bytes.len() as u32
+            },
+        )
+        .unwrap();
+    linker
+        .func_wrap(
+            "host",
             "get_time_since_startup",
             |caller: Caller<'_, State<In, Out>>| -> u64 {
                 let startup_time = caller.data().startup_time;

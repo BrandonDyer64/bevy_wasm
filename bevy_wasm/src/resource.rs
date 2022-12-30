@@ -2,12 +2,14 @@
 
 use std::{
     collections::{HashMap, VecDeque},
+    sync::Arc,
     time::Instant,
 };
 
 use bevy_ecs::prelude::*;
 use bevy_log::prelude::*;
 use bevy_wasm_shared::prelude::*;
+use serde::Serialize;
 use wasmtime::*;
 
 use crate::{linker::build_linker, Message};
@@ -25,6 +27,9 @@ pub struct State<In: Message, Out: Message> {
 
     /// Events that have been sent to the host
     pub events_out: Vec<Out>,
+
+    /// Resources that have changed since the last update
+    pub shared_resource_values: HashMap<String, Arc<Vec<u8>>>,
 }
 
 pub(crate) struct WasmRuntime<In: Message, Out: Message> {
@@ -42,7 +47,7 @@ pub struct WasmResource<In: Message, Out: Message> {
     pub(crate) protocol_version: Version,
     pub(crate) runtimes: Vec<WasmRuntime<In, Out>>,
     pub(crate) engine: Engine,
-    pub(crate) shared_resources: HashMap<String, Vec<u8>>,
+    pub(crate) shared_resources: HashMap<String, Arc<Vec<u8>>>,
 }
 
 impl<In: Message, Out: Message> WasmResource<In, Out> {
@@ -68,6 +73,7 @@ impl<In: Message, Out: Message> WasmResource<In, Out> {
                 app_ptr: 0,
                 events_out: Vec::new(),
                 events_in: VecDeque::new(),
+                shared_resource_values: HashMap::new(),
             },
         );
         let mut linker = build_linker(&self.engine, self.protocol_version);
@@ -87,5 +93,24 @@ impl<In: Message, Out: Message> WasmResource<In, Out> {
 
         // Add the new runtime to the resource
         self.runtimes.push(WasmRuntime { instance, store });
+    }
+
+    /// Update the value of a shared resource
+    pub fn update_resource<R: Resource + Serialize>(&mut self, resource_bytes: Vec<u8>) {
+        info!("Serialized bytes: {:?}", resource_bytes);
+        let resource_name = std::any::type_name::<R>();
+
+        let resource_rc = Arc::new(resource_bytes);
+
+        self.shared_resources
+            .insert(resource_name.to_string(), resource_rc.clone());
+
+        for runtime in self.runtimes.iter_mut() {
+            let state = runtime.store.data_mut();
+
+            state
+                .shared_resource_values
+                .insert(resource_name.to_string(), resource_rc.clone());
+        }
     }
 }

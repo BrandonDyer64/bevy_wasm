@@ -1,0 +1,14 @@
+[package]
+edition = "2021"
+name = "shared_resources_mod"
+publish = false
+version = "0.1.0"
+
+[lib]
+# Generate a `.wasm` file instead of a dll
+crate-type = ["cdylib"]
+
+[dependencies]
+bevy_ecs = "0.9"
+bevy_wasm_sys = {path = "../../../bevy_wasm_sys"}
+shared_resources_protocol = {path = "../shared_resources_protocol"}

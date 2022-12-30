@@ -12,6 +12,7 @@ use bevy_wasm_shared::prelude::*;
 use serde::{de::DeserializeOwned, Serialize};
 
 use crate::{
+    ecs::extern_res::ExternResources,
     error,
     events::{get_next_event, send_event},
     ffi::store_app,
@@ -94,10 +95,16 @@ impl<In: Message, Out: Message> Plugin for FFIPlugin<In, Out> {
             .add_event::<In>()
             .add_event::<Out>()
             .insert_resource(Time::new())
+            .insert_resource(ExternResources::new())
             .add_system_to_stage(CoreStage::First, update_time.at_start())
+            .add_system_to_stage(CoreStage::PreUpdate, fetch_resources)
             .add_system_to_stage(CoreStage::PreUpdate, event_listener::<In>)
             .add_system_to_stage(CoreStage::PostUpdate, event_sender::<Out>);
     }
+}
+
+fn fetch_resources(mut resources: ResMut<ExternResources>) {
+    resources.fetch_all();
 }
 
 fn event_listener<M: Message>(mut events: EventWriter<M>) {

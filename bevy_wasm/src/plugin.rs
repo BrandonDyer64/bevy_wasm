@@ -1,17 +1,33 @@
 //! Add this plugin to your Bevy app to enable WASM-based modding
 
+use std::fmt::Debug;
+
 use bevy_app::prelude::*;
-use bevy_ecs::{prelude::*, schedule::SystemDescriptor};
+use bevy_ecs::prelude::*;
 use bevy_log::prelude::*;
 use bevy_wasm_shared::prelude::*;
 use colored::*;
 use serde::{de::DeserializeOwned, Serialize};
 
-use crate::{
-    resource::WasmResource,
-    systems::{event_listener, update_mods, update_shared_system},
-    Message,
-};
+use crate::{resource::WasmResource, systems::*, Message};
+
+trait AddSystemToApp: Send + Sync + 'static {
+    fn add_system_to_app(&self, app: &mut App);
+}
+
+struct ResourceUpdater<R: Resource + Serialize + DeserializeOwned, In: Message, Out: Message> {
+    _r: std::marker::PhantomData<R>,
+    _in: std::marker::PhantomData<In>,
+    _out: std::marker::PhantomData<Out>,
+}
+
+impl<R: Resource + Debug + Serialize + DeserializeOwned, In: Message, Out: Message> AddSystemToApp
+    for ResourceUpdater<R, In, Out>
+{
+    fn add_system_to_app(&self, app: &mut App) {
+        app.add_system(update_shared_resource::<R, In, Out>);
+    }
+}
 
 /// Add this plugin to your Bevy app to enable WASM-based modding
 ///
@@ -23,7 +39,7 @@ where
     Out: Message,
 {
     protocol_version: Version,
-    shared_resources: Vec<SystemDescriptor>,
+    shared_resources: Vec<Box<dyn AddSystemToApp>>,
     _in: std::marker::PhantomData<In>,
     _out: std::marker::PhantomData<Out>,
 }
@@ -54,9 +70,13 @@ impl<In: Message, Out: Message> WasmPlugin<In, Out> {
     }
 
     /// Register a resource to be shared with mods. THIS SHOULD COME FROM YOUR PROTOCOL CRATE
-    pub fn share_resource<T: Resource + Serialize + DeserializeOwned>(mut self) -> Self {
+    pub fn share_resource<T: Resource + Debug + Serialize + DeserializeOwned>(mut self) -> Self {
         self.shared_resources
-            .push(update_shared_system::<T, In, Out>.into_descriptor());
+            .push(Box::new(ResourceUpdater::<T, In, Out> {
+                _r: std::marker::PhantomData,
+                _in: std::marker::PhantomData,
+                _out: std::marker::PhantomData,
+            }));
         self
     }
 }
@@ -72,14 +92,7 @@ impl<In: Message, Out: Message> Plugin for WasmPlugin<In, Out> {
             .add_system_to_stage(CoreStage::PostUpdate, event_listener::<In, Out>);
 
         for system in self.shared_resources.iter() {
-            app.add_system(system);
+            system.add_system_to_app(app);
         }
     }
-}
-
-pub trait ShareResourceWithMods {
-    fn share_resource_with_mods<In, Out>(self) -> Self
-    where
-        In: Message,
-        Out: Message;
 }

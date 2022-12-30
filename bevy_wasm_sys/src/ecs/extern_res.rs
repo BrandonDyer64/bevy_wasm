@@ -3,6 +3,7 @@
 use std::{
     any::{Any, TypeId},
     collections::HashMap,
+    fmt::Debug,
     marker::PhantomData,
     ops::Deref,
 };
@@ -10,10 +11,10 @@ use std::{
 use bevy_ecs::{prelude::*, system::SystemParam};
 use serde::{de::DeserializeOwned, Serialize};
 
-use crate::error;
+use crate::{error, info};
 
 /// Get the value of a resource from the host
-pub fn get_resource<T: Resource + DeserializeOwned>() -> Option<T> {
+pub fn get_resource<T: Resource + Serialize + DeserializeOwned>() -> Option<T> {
     let name = std::any::type_name::<T>();
     let mut buffer = [0; 1024];
 
@@ -31,7 +32,11 @@ pub fn get_resource<T: Resource + DeserializeOwned>() -> Option<T> {
         return None;
     }
 
-    match bincode::deserialize(&buffer[..len]) {
+    let resource_bytes = &buffer[..len];
+
+    info!("Serialized bytes: {:?}", resource_bytes);
+
+    match bincode::deserialize(resource_bytes) {
         Ok(resource) => Some(resource),
         Err(err) => {
             error!("Failed to deserialize resource from host: {}", err);
@@ -40,48 +45,67 @@ pub fn get_resource<T: Resource + DeserializeOwned>() -> Option<T> {
     }
 }
 
+trait AsAny {
+    fn as_any(&self) -> &dyn Any;
+}
+
+impl<T: Any> AsAny for T {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
+trait AnyResource: AsAny + Any + Resource + Send + Sync + 'static {}
+
+impl<T: Any + Resource + Send + Sync + 'static> AnyResource for T {}
+
+impl dyn AnyResource {
+    fn downcast_ref<T: AnyResource>(&self) -> Option<&T> {
+        self.as_any().downcast_ref::<T>()
+    }
+}
+
 trait ResourceFetch: Send + Sync {
-    fn fetch(&mut self) -> Option<Box<dyn Any + Send + Sync>>;
+    fn fetch(&mut self) -> Option<Box<dyn AnyResource>>;
 }
 
 struct ExternResourceFetcher<T: Resource + DeserializeOwned + Send + Sync>(PhantomData<T>);
 
-impl<T: Resource + DeserializeOwned + Send + Sync> ResourceFetch for ExternResourceFetcher<T> {
-    fn fetch(&mut self) -> Option<Box<dyn Any + Send + Sync>> {
+impl<T: Resource + Serialize + DeserializeOwned + Send + Sync> ResourceFetch
+    for ExternResourceFetcher<T>
+{
+    fn fetch(&mut self) -> Option<Box<dyn AnyResource>> {
         Some(Box::new(get_resource::<T>()?))
     }
 }
 
 struct ExternResourceValue {
-    value: Box<dyn Any + Send + Sync>,
+    value: Option<Box<dyn AnyResource>>,
     fetcher: Box<dyn ResourceFetch>,
 }
 
 impl ExternResourceValue {
     pub fn init<T: Resource + Serialize + DeserializeOwned>() -> Self {
+        info!("init: {:?}", TypeId::of::<T>());
         Self {
-            value: Box::new(match get_resource::<T>() {
-                Some(v) => v,
-                None => {
-                    error!(
-                        "Resource was not shared with mod: {}",
-                        std::any::type_name::<T>()
-                    );
-                    panic!();
-                }
-            }),
+            value: match get_resource::<T>() {
+                Some(v) => Some(Box::new(v)),
+                None => None,
+            },
             fetcher: Box::new(ExternResourceFetcher::<T>(PhantomData)),
         }
     }
 
-    fn fetch(&mut self) {
+    pub fn fetch(&mut self) {
         if let Some(new_value) = self.fetcher.fetch() {
-            self.value = Box::new(new_value);
+            self.value = Some(new_value);
         }
     }
 
-    fn try_get<T: Resource>(&self) -> Option<&T> {
-        self.value.downcast_ref()
+    pub fn try_get<T: Resource + Serialize + DeserializeOwned>(&self) -> Option<&T> {
+        self.value
+            .as_ref()
+            .and_then(|boxed| (&**boxed as &(dyn AnyResource + 'static)).downcast_ref::<T>())
     }
 }
 
@@ -89,6 +113,16 @@ impl ExternResourceValue {
 #[derive(Resource)]
 pub struct ExternResources {
     resources: HashMap<TypeId, ExternResourceValue>,
+}
+
+impl Debug for ExternResources {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_map();
+        for (type_id, resource_value) in &self.resources {
+            debug.entry(&type_id, &resource_value.value.is_some());
+        }
+        debug.finish()
+    }
 }
 
 impl ExternResources {
@@ -110,7 +144,11 @@ impl ExternResources {
     }
 
     pub fn try_get<T: Resource + Serialize + DeserializeOwned>(&self) -> Option<&T> {
-        self.resources.get(&TypeId::of::<T>())?.try_get()
+        let type_id = TypeId::of::<T>();
+        info!("Getting resource: {:?}", type_id);
+        let resource_value = self.resources.get(&type_id)?;
+        info!("Got resource: {:?}", resource_value.value.is_some());
+        resource_value.try_get()
     }
 }
 
@@ -122,6 +160,12 @@ pub struct ExternRes<'w, 's, T: Resource + Serialize + DeserializeOwned> {
     t: PhantomData<T>,
     #[system_param(ignore)]
     marker: PhantomData<&'s ()>,
+}
+
+impl<'w, 's, T: Debug + Resource + Serialize + DeserializeOwned> Debug for ExternRes<'w, 's, T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.deref().fmt(f)
+    }
 }
 
 impl<'w, 's, T: Resource + Serialize + DeserializeOwned> ExternRes<'w, 's, T> {
