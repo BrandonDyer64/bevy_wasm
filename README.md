@@ -194,7 +194,3 @@ See [examples/shared_resources](https://github.com/BrandonDyer64/bevy_wasm/tree/
 | ⬜  | Mod hotloading                                   |
 | ⬜  | Automatic component syncing                      |
 | ⬜  | Browser support                                  |
-
-```
-
-```
