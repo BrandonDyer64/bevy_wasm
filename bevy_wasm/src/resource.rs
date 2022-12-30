@@ -97,7 +97,6 @@ impl<In: Message, Out: Message> WasmResource<In, Out> {
 
     /// Update the value of a shared resource
     pub fn update_resource<R: Resource + Serialize>(&mut self, resource_bytes: Vec<u8>) {
-        info!("Serialized bytes: {:?}", resource_bytes);
         let resource_name = std::any::type_name::<R>();
 
         let resource_rc = Arc::new(resource_bytes);

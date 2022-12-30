@@ -9,7 +9,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .insert_resource(MyCoolResource {
             value: 0,
-            v2: 1234567890,
+            string: "Hello from MyCoolResource!".to_string(),
         })
         .add_plugin(
             WasmPlugin::<HostMessage, ModMessage>::new(PROTOCOL_VERSION)
@@ -56,5 +56,4 @@ fn setup(
 
 fn update_resource(mut my_cool_resource: ResMut<MyCoolResource>) {
     my_cool_resource.value += 1;
-    info!("{:?}", my_cool_resource);
 }

@@ -1,7 +1,4 @@
-use bevy_wasm_sys::{
-    ecs::extern_res::{get_resource, ExternResources},
-    prelude::*,
-};
+use bevy_wasm_sys::{ecs::extern_res::ExternResources, prelude::*};
 use shared_resources_protocol::{HostMessage, ModMessage, MyCoolResource, PROTOCOL_VERSION};
 
 #[no_mangle]
@@ -18,10 +15,9 @@ fn startup_system(mut resources: ResMut<ExternResources>) {
     info!("Hello from startup_system inside mod!");
     warn!("This is a warning!");
     error!("This is an error!");
-    // resources.insert::<MyCoolResource>();
+    resources.insert::<MyCoolResource>();
 }
 
-fn print_resource_value() {
-    let resource = get_resource::<MyCoolResource>();
-    info!("Resource value: {:?}", resource);
+fn print_resource_value(resource: ExternRes<MyCoolResource>) {
+    info!("{:?}", resource);
 }

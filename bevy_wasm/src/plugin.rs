@@ -1,7 +1,5 @@
 //! Add this plugin to your Bevy app to enable WASM-based modding
 
-use std::fmt::Debug;
-
 use bevy_app::prelude::*;
 use bevy_ecs::prelude::*;
 use bevy_log::prelude::*;
@@ -21,7 +19,7 @@ struct ResourceUpdater<R: Resource + Serialize + DeserializeOwned, In: Message, 
     _out: std::marker::PhantomData<Out>,
 }
 
-impl<R: Resource + Debug + Serialize + DeserializeOwned, In: Message, Out: Message> AddSystemToApp
+impl<R: Resource + Serialize + DeserializeOwned, In: Message, Out: Message> AddSystemToApp
     for ResourceUpdater<R, In, Out>
 {
     fn add_system_to_app(&self, app: &mut App) {
@@ -70,7 +68,7 @@ impl<In: Message, Out: Message> WasmPlugin<In, Out> {
     }
 
     /// Register a resource to be shared with mods. THIS SHOULD COME FROM YOUR PROTOCOL CRATE
-    pub fn share_resource<T: Resource + Debug + Serialize + DeserializeOwned>(mut self) -> Self {
+    pub fn share_resource<T: Resource + Serialize + DeserializeOwned>(mut self) -> Self {
         self.shared_resources
             .push(Box::new(ResourceUpdater::<T, In, Out> {
                 _r: std::marker::PhantomData,

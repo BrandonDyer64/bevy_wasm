@@ -1,4 +1,4 @@
-use std::{fmt::Debug, ops::Deref};
+use std::ops::Deref;
 
 use bevy_ecs::prelude::*;
 use bevy_log::prelude::*;
@@ -29,7 +29,7 @@ pub(crate) fn update_mods<In: Message, Out: Message>(
 }
 
 pub(crate) fn update_shared_resource<
-    T: Resource + Debug + DeserializeOwned + Serialize,
+    T: Resource + DeserializeOwned + Serialize,
     In: Message,
     Out: Message,
 >(
@@ -38,8 +38,8 @@ pub(crate) fn update_shared_resource<
 ) {
     if res.is_changed() {
         let v: &T = res.deref();
-        info!("SERIALIZING: {:?}", v);
-        wasm.update_resource::<T>(bincode::serialize(v).unwrap());
+        let resource_bytes: Vec<u8> = bincode::serialize(v).unwrap();
+        wasm.update_resource::<T>(resource_bytes);
     }
 }
 

@@ -11,7 +11,7 @@ use std::{
 use bevy_ecs::{prelude::*, system::SystemParam};
 use serde::{de::DeserializeOwned, Serialize};
 
-use crate::{error, info};
+use crate::error;
 
 /// Get the value of a resource from the host
 pub fn get_resource<T: Resource + Serialize + DeserializeOwned>() -> Option<T> {
@@ -33,8 +33,6 @@ pub fn get_resource<T: Resource + Serialize + DeserializeOwned>() -> Option<T> {
     }
 
     let resource_bytes = &buffer[..len];
-
-    info!("Serialized bytes: {:?}", resource_bytes);
 
     match bincode::deserialize(resource_bytes) {
         Ok(resource) => Some(resource),
@@ -69,10 +67,10 @@ trait ResourceFetch: Send + Sync {
     fn fetch(&mut self) -> Option<Box<dyn AnyResource>>;
 }
 
-struct ExternResourceFetcher<T: Resource + DeserializeOwned + Send + Sync>(PhantomData<T>);
+struct ExternResourceFetchImpl<T: Resource + DeserializeOwned + Send + Sync>(PhantomData<T>);
 
 impl<T: Resource + Serialize + DeserializeOwned + Send + Sync> ResourceFetch
-    for ExternResourceFetcher<T>
+    for ExternResourceFetchImpl<T>
 {
     fn fetch(&mut self) -> Option<Box<dyn AnyResource>> {
         Some(Box::new(get_resource::<T>()?))
@@ -86,13 +84,12 @@ struct ExternResourceValue {
 
 impl ExternResourceValue {
     pub fn init<T: Resource + Serialize + DeserializeOwned>() -> Self {
-        info!("init: {:?}", TypeId::of::<T>());
         Self {
             value: match get_resource::<T>() {
                 Some(v) => Some(Box::new(v)),
                 None => None,
             },
-            fetcher: Box::new(ExternResourceFetcher::<T>(PhantomData)),
+            fetcher: Box::new(ExternResourceFetchImpl::<T>(PhantomData)),
         }
     }
 
@@ -102,7 +99,7 @@ impl ExternResourceValue {
         }
     }
 
-    pub fn try_get<T: Resource + Serialize + DeserializeOwned>(&self) -> Option<&T> {
+    pub fn downcast_ref<T: Resource + Serialize + DeserializeOwned>(&self) -> Option<&T> {
         self.value
             .as_ref()
             .and_then(|boxed| (&**boxed as &(dyn AnyResource + 'static)).downcast_ref::<T>())
@@ -143,12 +140,8 @@ impl ExternResources {
         }
     }
 
-    pub fn try_get<T: Resource + Serialize + DeserializeOwned>(&self) -> Option<&T> {
-        let type_id = TypeId::of::<T>();
-        info!("Getting resource: {:?}", type_id);
-        let resource_value = self.resources.get(&type_id)?;
-        info!("Got resource: {:?}", resource_value.value.is_some());
-        resource_value.try_get()
+    pub fn get<T: Resource + Serialize + DeserializeOwned>(&self) -> Option<&T> {
+        self.resources.get(&TypeId::of::<T>())?.downcast_ref()
     }
 }
 
@@ -170,8 +163,8 @@ impl<'w, 's, T: Debug + Resource + Serialize + DeserializeOwned> Debug for Exter
 
 impl<'w, 's, T: Resource + Serialize + DeserializeOwned> ExternRes<'w, 's, T> {
     /// Get the resource
-    pub fn try_get(&self) -> Option<&T> {
-        self.res.resources.get(&TypeId::of::<T>())?.try_get()
+    pub fn get(&self) -> Option<&T> {
+        self.res.get::<T>()
     }
 }
 
@@ -179,7 +172,7 @@ impl<'w, 's, T: Resource + Serialize + DeserializeOwned> Deref for ExternRes<'w,
     type Target = T;
 
     fn deref(&self) -> &Self::Target {
-        match self.try_get() {
+        match self.get() {
             Some(v) => v,
             None => {
                 error!(
