@@ -1,0 +1,11 @@
+[package]
+edition = "2021"
+name = "shared_resources_protocol"
+publish = false
+version = "0.1.0"
+
+[dependencies]
+bevy_derive = "0.9"
+bevy_ecs = "0.9"
+bevy_wasm_shared = {path = "../../../bevy_wasm_shared"}
+serde = {version = "1.0", features = ["derive"]}

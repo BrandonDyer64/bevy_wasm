@@ -19,6 +19,12 @@ extern "C" {
     /// Nanoseconds since the mod was loaded
     pub fn get_time_since_startup() -> u64;
     pub fn get_protocol_version() -> u64;
+    pub fn get_resource(
+        name: *const u8,
+        name_len: usize,
+        buffer: *const u8,
+        buffer_len: usize,
+    ) -> usize;
 }
 
 #[cfg(feature = "bevy")]

@@ -122,6 +122,56 @@ fn send_messages_to_game(mut events: EventWriter<ModMessage>) {
 }
 ```
 
+## Sharing Resources
+
+**Protocol:**
+
+```rust
+#[derive(Resource, Serialize, Deserialize)]
+pub struct MyResource {
+    pub value: i32,
+}
+```
+
+**Game:**
+
+```rust
+App::new()
+    ...
+    .add_resource(MyResource { value: 0 })
+    .add_plugin(
+        WasmPlugin::<GameMessage, ModMessage>::new(PROTOCOL_VERSION)
+            .share_resource::<MyResource>()
+    )
+    .add_system(change_resource_value)
+    ...
+
+fn change_resource_value(mut resource: ResMut<MyResource>) {
+    resource.value += 1;
+}
+```
+
+**Mod:**
+
+```rust
+App::new()
+    ...
+    .add_plugin(FFIPlugin::<GameMessage, ModMessage>::new(PROTOCOL_VERSION))
+    .add_startup_system(setup)
+    .add_system(print_resource_value)
+    ...
+
+fn setup(mut extern_resource: ResMut<ExternResources>) {
+    extern_resources.insert::<MyResource>();
+}
+
+fn print_resource_value(resource: ExternRes<MyResource>) {
+    println!("MyResource value: {}", resource.value);
+}
+```
+
+See [examples/shared_resources](https://github.com/BrandonDyer64/bevy_wasm/tree/main/examples/shared_resources) for a full example.
+
 ## Roadmap
 
 |     |                                                  |
@@ -132,6 +182,9 @@ fn send_messages_to_game(mut events: EventWriter<ModMessage>) {
 | ✅  | Multi-mod support                                |
 | ✅  | Time keeping                                     |
 | ✅  | Protocol version checking                        |
+| ✅  | Extern Resource                                  |
+| ⬜  | Mutable Extern Resource                          |
+| ⬜  | Extern Query                                     |
 | ⬜  | Startup system mod loading                       |
 | ⬜  | Custom FFI                                       |
 | ⬜  | Mod discrimination (events aren't broadcast all) |

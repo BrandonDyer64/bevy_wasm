@@ -10,10 +10,14 @@ members = [
   "examples/simple/simple",
   "examples/simple/simple_mod",
   "examples/simple/simple_protocol",
+  "examples/shared_resources/shared_resources",
+  "examples/shared_resources/shared_resources_mod",
+  "examples/shared_resources/shared_resources_protocol",
 ]
 resolver = "2"
 
 [profile.release-wasm]
+debug = false
 inherits = "release"
 lto = true
 opt-level = 's'

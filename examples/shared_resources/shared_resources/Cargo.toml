@@ -1,0 +1,11 @@
+[package]
+build = "build.rs"
+edition = "2021"
+name = "shared_resources"
+publish = false
+version = "0.1.0"
+
+[dependencies]
+bevy = "0.9"
+bevy_wasm = {path = "../../../bevy_wasm"}
+shared_resources_protocol = {path = "../shared_resources_protocol"}
