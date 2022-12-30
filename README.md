@@ -122,7 +122,7 @@ fn send_messages_to_game(mut events: EventWriter<ModMessage>) {
 }
 ```
 
-## Sharing `Resource`s
+## Sharing Resources
 
 **Protocol:**
 
@@ -161,8 +161,8 @@ App::new()
     .add_system(print_resource_value)
     ...
 
-fn setup(mut resource: ResMut<ExternResources>) {
-    resources.insert::<MyResource>();
+fn setup(mut extern_resource: ResMut<ExternResources>) {
+    extern_resources.insert::<MyResource>();
 }
 
 fn print_resource_value(resource: ExternRes<MyResource>) {
