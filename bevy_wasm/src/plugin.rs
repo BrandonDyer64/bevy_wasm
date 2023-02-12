@@ -1,13 +1,11 @@
 //! Add this plugin to your Bevy app to enable WASM-based modding
 
-use bevy_app::prelude::*;
-use bevy_ecs::prelude::*;
-use bevy_log::prelude::*;
+use bevy::prelude::*;
 use bevy_wasm_shared::prelude::*;
 use colored::*;
 use serde::{de::DeserializeOwned, Serialize};
 
-use crate::{resource::WasmResource, systems::*, Message};
+use crate::{resources::WasmEngine, systems, Message};
 
 trait AddSystemToApp: Send + Sync + 'static {
     fn add_system_to_app(&self, app: &mut App);
@@ -23,7 +21,7 @@ impl<R: Resource + Serialize + DeserializeOwned, In: Message, Out: Message> AddS
     for ResourceUpdater<R, In, Out>
 {
     fn add_system_to_app(&self, app: &mut App) {
-        app.add_system(update_shared_resource::<R, In, Out>);
+        app.add_system(systems::update_shared_resource::<R, In, Out>);
     }
 }
 
@@ -81,13 +79,12 @@ impl<In: Message, Out: Message> WasmPlugin<In, Out> {
 
 impl<In: Message, Out: Message> Plugin for WasmPlugin<In, Out> {
     fn build(&self, app: &mut App) {
-        let wasm_resource = WasmResource::<In, Out>::new(self.protocol_version.clone().into());
+        let wasm_resource = WasmEngine::new(self.protocol_version.clone().into());
 
         app.insert_resource(wasm_resource)
             .add_event::<In>()
             .add_event::<Out>()
-            .add_system(update_mods::<In, Out>)
-            .add_system_to_stage(CoreStage::PostUpdate, event_listener::<In, Out>);
+            .add_system(systems::tick_mods::<In, Out>);
 
         for system in self.shared_resources.iter() {
             system.add_system_to_app(app);

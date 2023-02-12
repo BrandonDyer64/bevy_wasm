@@ -2,7 +2,7 @@
 edition = "2021"
 name = "cubes_protocol"
 publish = false
-version = "0.1.0"
+version = "123.456.789"
 
 [dependencies]
 bevy_wasm_shared = {path = "../../../bevy_wasm_shared"}

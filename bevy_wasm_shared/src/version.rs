@@ -59,8 +59,7 @@ pub const fn __str_to_u16(s: &str) -> u16 {
     let s = s.as_bytes();
     let mut i = 0;
     while i < s.len() {
-        let digit: u32 = s.len() as u32 - i as u32;
-        result += (s[i] as u16 - 48) * 10u16.pow(digit);
+        result += (s[s.len() - i - 1] as u16 - 48) * 10u16.pow(i as u32);
         i += 1;
     }
     result

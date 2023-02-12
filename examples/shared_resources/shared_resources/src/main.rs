@@ -21,8 +21,8 @@ fn main() {
         .run();
 }
 
-fn insert_mods(mut wasm: ResMut<WasmResource<HostMessage, ModMessage>>) {
-    wasm.insert_wasm(MOD_WASM);
+fn insert_mods(mut commands: Commands, wasm_engine: Res<WasmEngine>) {
+    commands.spawn(WasmMod::new(&wasm_engine, MOD_WASM).unwrap());
 }
 
 fn update_resource(mut my_cool_resource: ResMut<MyCoolResource>) {

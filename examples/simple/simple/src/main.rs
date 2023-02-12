@@ -15,8 +15,8 @@ fn main() {
         .run();
 }
 
-fn insert_mods(mut wasm: ResMut<WasmResource<GameMessage, ModMessage>>) {
-    wasm.insert_wasm(MOD_WASM);
+fn insert_mods(mut commands: Commands, wasm_engine: Res<WasmEngine>) {
+    commands.spawn(WasmMod::new(&wasm_engine, MOD_WASM).unwrap());
 }
 
 fn listen_for_mod_messages(mut events: EventReader<ModMessage>) {

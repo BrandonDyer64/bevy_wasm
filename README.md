@@ -59,14 +59,16 @@ use my_game_protocol::{GameMessage, ModMessage, PROTOCOL_VERSION};
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .add_plugin(
-            WasmPlugin::<GameMessage, ModMessage>::new(PROTOCOL_VERSION)
-                .with_mod(include_bytes!("some_mod.wasm"))
-                .with_mods(include_bytes!("some_other_mod.wasm"))
-        )
+        .add_plugin(WasmPlugin::<GameMessage, ModMessage>::new(PROTOCOL_VERSION))
+        .add_startup_system(add_mods)
         .add_system(listen_for_mod_messages)
         .add_system(send_messages_to_mods)
         .run();
+}
+
+fn add_mods(mut commands: Commands, wasm_engine: Res<WasmEngine>) {
+    commands.spawn(WasmMod::new(&wasm_engine, include_bytes!("some_mod.wasm")).unwrap());
+    commands.spawn(WasmMod::new(&wasm_engine, include_bytes!("some_other_mod.wasm")).unwrap());
 }
 
 fn listen_for_mod_messages(mut events: EventReader<ModMessage>) {
@@ -183,14 +185,14 @@ See [examples/shared_resources](https://github.com/BrandonDyer64/bevy_wasm/tree/
 | ✅  | Time keeping                                     |
 | ✅  | Protocol version checking                        |
 | ✅  | Extern Resource                                  |
+| ✅  | Startup system mod loading                       |
+| ✅  | Direct update control                            |
+| ✅  | Mod unloading                                    |
+| ✅  | Mod discrimination (events aren't broadcast all) |
 | ⬜  | Mutable Extern Resource                          |
 | ⬜  | Extern Query                                     |
-| ⬜  | Startup system mod loading                       |
 | ⬜  | Custom FFI                                       |
-| ⬜  | Mod discrimination (events aren't broadcast all) |
-| ⬜  | `AssetServer` support and `Handle<WasmMod>`      |
-| ⬜  | Mod unloading                                    |
-| ⬜  | Direct update control                            |
+| ⬜  | Synced time                                      |
 | ⬜  | Mod hotloading                                   |
 | ⬜  | Automatic component syncing                      |
 | ⬜  | Browser support                                  |

@@ -1,23 +1,20 @@
-use std::time::Instant;
+use std::{sync::Arc, time::Instant};
 
-use bevy_log::prelude::*;
+use bevy::prelude::*;
 use bevy_wasm_shared::prelude::*;
 use colored::*;
 use wasmtime::*;
 
-use crate::{resource::State, Message};
+use crate::mod_state::ModState;
 
-pub(crate) fn build_linker<In: Message, Out: Message>(
-    engine: &Engine,
-    protocol_version: Version,
-) -> Linker<State<In, Out>> {
-    let mut linker: Linker<State<In, Out>> = Linker::new(&engine);
+pub(crate) fn build_linker(engine: &Engine, protocol_version: Version) -> Linker<ModState> {
+    let mut linker: Linker<ModState> = Linker::new(&engine);
 
     linker
         .func_wrap(
             "host",
             "console_info",
-            |mut caller: Caller<'_, State<In, Out>>, msg: i32, len: u32| {
+            |mut caller: Caller<'_, ModState>, msg: i32, len: u32| {
                 let mem = match caller.get_export("memory") {
                     Some(Extern::Memory(mem)) => mem,
                     _ => panic!("failed to find host memory"),
@@ -37,7 +34,7 @@ pub(crate) fn build_linker<In: Message, Out: Message>(
         .func_wrap(
             "host",
             "console_warn",
-            |mut caller: Caller<'_, State<In, Out>>, msg: i32, len: u32| {
+            |mut caller: Caller<'_, ModState>, msg: i32, len: u32| {
                 let mem = match caller.get_export("memory") {
                     Some(Extern::Memory(mem)) => mem,
                     _ => panic!("failed to find host memory"),
@@ -57,7 +54,7 @@ pub(crate) fn build_linker<In: Message, Out: Message>(
         .func_wrap(
             "host",
             "console_error",
-            |mut caller: Caller<'_, State<In, Out>>, msg: i32, len: u32| {
+            |mut caller: Caller<'_, ModState>, msg: i32, len: u32| {
                 let mem = match caller.get_export("memory") {
                     Some(Extern::Memory(mem)) => mem,
                     _ => panic!("failed to find host memory"),
@@ -77,7 +74,7 @@ pub(crate) fn build_linker<In: Message, Out: Message>(
         .func_wrap(
             "host",
             "store_app",
-            |mut caller: Caller<'_, State<In, Out>>, app_ptr: i32| {
+            |mut caller: Caller<'_, ModState>, app_ptr: i32| {
                 caller.data_mut().app_ptr = app_ptr;
                 info!("{} 0x{:X}", "Storing app pointer:".italic(), app_ptr);
             },
@@ -87,25 +84,20 @@ pub(crate) fn build_linker<In: Message, Out: Message>(
         .func_wrap(
             "host",
             "send_serialized_event",
-            |mut caller: Caller<'_, State<In, Out>>, msg: i32, len: u32| {
+            |mut caller: Caller<'_, ModState>, msg: i32, len: u32| {
                 let mem = match caller.get_export("memory") {
                     Some(Extern::Memory(mem)) => mem,
                     _ => panic!("failed to find host memory"),
                 };
 
-                let data = mem
+                let data: Arc<[u8]> = mem
                     .data(&caller)
                     .get(msg as u32 as usize..)
                     .and_then(|arr| arr.get(..len as u32 as usize))
-                    .unwrap();
-                let event: Out = match bincode::deserialize(data) {
-                    Ok(event) => event,
-                    Err(e) => {
-                        error!("Failed to deserialize event from mod: {}", e);
-                        return;
-                    }
-                };
-                caller.data_mut().events_out.push(event);
+                    .unwrap()
+                    .into();
+
+                caller.data_mut().events_out.push(data);
             },
         )
         .unwrap();
@@ -113,21 +105,13 @@ pub(crate) fn build_linker<In: Message, Out: Message>(
         .func_wrap(
             "host",
             "get_next_event",
-            |mut caller: Caller<'_, State<In, Out>>, arena: i32, len: u32| -> u32 {
+            |mut caller: Caller<'_, ModState>, arena: i32, len: u32| -> u32 {
                 let mem = match caller.get_export("memory") {
                     Some(Extern::Memory(mem)) => mem,
                     _ => panic!("failed to find host memory"),
                 };
 
-                let Some(event) = caller.data_mut().events_in.pop_front() else { return 0 };
-
-                let serialized_event = match bincode::serialize(&event) {
-                    Ok(event) => event,
-                    Err(e) => {
-                        error!("Failed to serialize event: {}", e);
-                        return 0;
-                    }
-                };
+                let Some(serialized_event) = caller.data_mut().events_in.pop_front() else { return 0 };
 
                 let buffer = mem
                     .data_mut(&mut caller)
@@ -135,7 +119,7 @@ pub(crate) fn build_linker<In: Message, Out: Message>(
                     .and_then(|arr| arr.get_mut(..len as u32 as usize))
                     .unwrap();
 
-                buffer[..serialized_event.len()].copy_from_slice(serialized_event.as_slice());
+                buffer[..serialized_event.len()].copy_from_slice(&serialized_event);
                 serialized_event.len() as u32
             },
         )
@@ -144,7 +128,7 @@ pub(crate) fn build_linker<In: Message, Out: Message>(
         .func_wrap(
             "host",
             "get_resource",
-            |mut caller: Caller<'_, State<In, Out>>,
+            |mut caller: Caller<'_, ModState>,
              name: i32,
              name_len: u32,
              buffer: i32,
@@ -175,9 +159,7 @@ pub(crate) fn build_linker<In: Message, Out: Message>(
                     .and_then(|arr| arr.get_mut(..buffer_len as u32 as usize))
                     .unwrap();
 
-                let resource_bytes: &[u8] = resource_bytes.as_ref().as_slice();
-
-                buffer[..resource_bytes.len()].copy_from_slice(resource_bytes);
+                buffer[..resource_bytes.len()].copy_from_slice(&resource_bytes);
                 resource_bytes.len() as u32
             },
         )
@@ -186,7 +168,7 @@ pub(crate) fn build_linker<In: Message, Out: Message>(
         .func_wrap(
             "host",
             "get_time_since_startup",
-            |caller: Caller<'_, State<In, Out>>| -> u64 {
+            |caller: Caller<'_, ModState>| -> u64 {
                 let startup_time = caller.data().startup_time;
                 let delta = Instant::now() - startup_time;
                 delta.as_nanos() as u64
@@ -213,7 +195,7 @@ pub(crate) fn build_linker<In: Message, Out: Message>(
         .func_wrap(
             "__wbindgen_placeholder__",
             "__wbindgen_throw",
-            |mut caller: Caller<'_, State<In, Out>>, msg: i32, len: i32| {
+            |mut caller: Caller<'_, ModState>, msg: i32, len: i32| {
                 let mem = match caller.get_export("memory") {
                     Some(Extern::Memory(mem)) => mem,
                     _ => panic!("failed to find host memory"),

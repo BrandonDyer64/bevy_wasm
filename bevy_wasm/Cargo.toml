@@ -7,15 +7,16 @@ license = "Apache-2.0 WITH LLVM-exception"
 name = "bevy_wasm"
 readme = "../README.md"
 repository = "https://github.com/BrandonDyer64/bevy_wasm"
-version = "0.9.7"
+version = "0.9.8"
 
 [dependencies]
-bevy_app = "0.9"
-bevy_ecs = "0.9"
-bevy_log = "0.9"
 bevy_wasm_shared = {path = "../bevy_wasm_shared", version = "0.9"}
 bincode = "1.3"
 colored = "2.0"
 serde = "1.0"
 tracing = "0.1"
-wasmtime = "4"
+wasmtime = "5"
+
+[dependencies.bevy]
+default-features = false
+version = "0.9"

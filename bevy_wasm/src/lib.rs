@@ -9,10 +9,12 @@
 
 use serde::{de::DeserializeOwned, Serialize};
 
-pub(crate) mod linker;
+pub mod components;
+mod linker;
+mod mod_state;
 pub mod plugin;
-pub mod resource;
-pub(crate) mod systems;
+pub mod resources;
+mod systems;
 
 /// Any data type that can be used as a Host <-> Mod message
 ///
@@ -25,6 +27,6 @@ impl<T> Message for T where T: Send + Sync + Serialize + DeserializeOwned + Clon
 
 /// Convinience exports
 pub mod prelude {
-    pub use crate::{plugin::WasmPlugin, resource::WasmResource, Message};
+    pub use crate::{components::*, plugin::WasmPlugin, resources::WasmEngine, Message};
     pub use bevy_wasm_shared::prelude::*;
 }
