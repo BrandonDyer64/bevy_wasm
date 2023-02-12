@@ -1,5 +1,6 @@
 [package]
 edition = "2021"
+license = "MIT OR Apache-2.0"
 name = "cubes_protocol"
 publish = false
 version = "123.456.789"

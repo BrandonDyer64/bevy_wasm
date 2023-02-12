@@ -1,5 +1,6 @@
 [package]
 edition = "2021"
+license = "MIT OR Apache-2.0"
 name = "mod_with_bevy"
 publish = false
 version = "0.1.0"
