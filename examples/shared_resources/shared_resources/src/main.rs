@@ -14,7 +14,7 @@ fn main() {
         })
         .add_plugin(
             WasmPlugin::<HostMessage, ModMessage>::new(PROTOCOL_VERSION)
-                .share_resource::<MyCoolResource>(),
+                .share_resource::<MyCoolResource>(true),
         )
         .add_startup_system(insert_mods)
         .add_system(update_resource)

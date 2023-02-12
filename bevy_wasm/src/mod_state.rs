@@ -14,8 +14,11 @@ pub struct ModState {
     pub events_in: VecDeque<Arc<[u8]>>,
 
     /// Events that have been sent to the host
-    pub events_out: Vec<Arc<[u8]>>,
+    pub events_out: Vec<Box<[u8]>>,
 
     /// Resources that have changed since the last update
     pub shared_resource_values: HashMap<String, Arc<[u8]>>,
+
+    /// Resources that have been mutated by the mod
+    pub resource_mutation_requests: HashMap<String, Arc<[u8]>>,
 }

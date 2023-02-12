@@ -1,10 +1,8 @@
-//! The `WasmEngine` struct
-
 use bevy::prelude::*;
 use bevy_wasm_shared::prelude::*;
 use wasmtime::*;
 
-/// Resource used for interacting with mods
+/// Holds the internal Wasmtime [`Engine`]
 ///
 /// It is currently very bare-bones, and will be expanded in the future.
 ///

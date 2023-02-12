@@ -10,6 +10,7 @@ repository = "https://github.com/BrandonDyer64/bevy_wasm"
 version = "0.9.8"
 
 [dependencies]
+anyhow = "1.0"
 bevy_wasm_shared = {path = "../bevy_wasm_shared", version = "0.9"}
 bincode = "1.3"
 colored = "2.0"

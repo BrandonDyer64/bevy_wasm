@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.9.9
+
+Unreleased
+
+-   Code is now dual licensed under Apache-2.0 and MIT.
+-   Added [anyhow](https://crates.io/crates/anyhow)
+-   Removed unwraps
+-   Beginnings of resource mutation requests
+
 ## 0.9.8
 
 -   The CHANGELOG.md file

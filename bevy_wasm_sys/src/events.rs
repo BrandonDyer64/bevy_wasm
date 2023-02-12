@@ -6,10 +6,18 @@ use crate::error;
 
 /// Send an event to the host.
 pub fn send_event<T: Serialize>(event: &T) {
-    let encoded: Vec<u8> = bincode::serialize(&event).unwrap();
+    let encoded: Vec<u8> = match bincode::serialize(&event) {
+        Ok(encoded) => encoded,
+        Err(err) => {
+            error!("Failed to serialize event: {}", err);
+            return;
+        }
+    };
+
     unsafe {
         crate::ffi::send_serialized_event(encoded.as_ptr(), encoded.len());
     }
+
     std::mem::drop(encoded);
 }
 

@@ -11,17 +11,14 @@ trait AddSystemToApp: Send + Sync + 'static {
     fn add_system_to_app(&self, app: &mut App);
 }
 
-struct ResourceUpdater<R: Resource + Serialize + DeserializeOwned, In: Message, Out: Message> {
+struct ResourceUpdater<R: Resource + Serialize + DeserializeOwned> {
+    allow_mutation_requests: bool,
     _r: std::marker::PhantomData<R>,
-    _in: std::marker::PhantomData<In>,
-    _out: std::marker::PhantomData<Out>,
 }
 
-impl<R: Resource + Serialize + DeserializeOwned, In: Message, Out: Message> AddSystemToApp
-    for ResourceUpdater<R, In, Out>
-{
+impl<R: Resource + Serialize + DeserializeOwned> AddSystemToApp for ResourceUpdater<R> {
     fn add_system_to_app(&self, app: &mut App) {
-        app.add_system(systems::update_shared_resource::<R, In, Out>);
+        app.add_system(systems::update_shared_resource::<R>);
     }
 }
 
@@ -66,13 +63,14 @@ impl<In: Message, Out: Message> WasmPlugin<In, Out> {
     }
 
     /// Register a resource to be shared with mods. THIS SHOULD COME FROM YOUR PROTOCOL CRATE
-    pub fn share_resource<T: Resource + Serialize + DeserializeOwned>(mut self) -> Self {
-        self.shared_resources
-            .push(Box::new(ResourceUpdater::<T, In, Out> {
-                _r: std::marker::PhantomData,
-                _in: std::marker::PhantomData,
-                _out: std::marker::PhantomData,
-            }));
+    pub fn share_resource<T: Resource + Serialize + DeserializeOwned>(
+        mut self,
+        allow_mutation_requests: bool,
+    ) -> Self {
+        self.shared_resources.push(Box::new(ResourceUpdater::<T> {
+            allow_mutation_requests,
+            _r: std::marker::PhantomData,
+        }));
         self
     }
 }

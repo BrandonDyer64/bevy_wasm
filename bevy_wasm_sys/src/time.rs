@@ -118,7 +118,7 @@ impl Time {
     ///
     ///     // Simulate that 30 ms have passed
     ///     let mut time = world.resource_mut::<Time>();
-    ///     let last_update = time.last_update().unwrap();
+    ///     let last_update = time.last_update().unwrap(); // Don't unwrap in a mod
     ///     time.update_with_instant(last_update + Duration::from_millis(30));
     ///
     ///     // Run system
