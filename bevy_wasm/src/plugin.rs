@@ -5,7 +5,11 @@ use bevy_wasm_shared::prelude::*;
 use colored::*;
 use serde::{de::DeserializeOwned, Serialize};
 
-use crate::{resources::WasmEngine, systems, Message};
+use crate::{
+    events::{ResourceMutation, ResourceMutationBundle},
+    resources::WasmEngine,
+    systems, Message,
+};
 
 trait AddSystemToApp: Send + Sync + 'static {
     fn add_system_to_app(&self, app: &mut App);
@@ -19,6 +23,11 @@ struct ResourceUpdater<R: Resource + Serialize + DeserializeOwned> {
 impl<R: Resource + Serialize + DeserializeOwned> AddSystemToApp for ResourceUpdater<R> {
     fn add_system_to_app(&self, app: &mut App) {
         app.add_system(systems::update_shared_resource::<R>);
+
+        if self.allow_mutation_requests {
+            app.add_event::<ResourceMutation<R>>()
+                .add_system(systems::send_mutation_requests::<R>);
+        }
     }
 }
 
@@ -82,6 +91,7 @@ impl<In: Message, Out: Message> Plugin for WasmPlugin<In, Out> {
         app.insert_resource(wasm_resource)
             .add_event::<In>()
             .add_event::<Out>()
+            .add_event::<ResourceMutationBundle>()
             .add_system(systems::tick_mods::<In, Out>);
 
         for system in self.shared_resources.iter() {

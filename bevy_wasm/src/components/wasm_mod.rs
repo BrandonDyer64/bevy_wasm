@@ -88,5 +88,5 @@ pub struct ModTickResponse {
     pub serialized_events_out: Vec<Box<[u8]>>,
 
     /// Resources that have been requested to be mutated by the mod
-    pub resource_mutation_requests: HashMap<String, Arc<[u8]>>,
+    pub resource_mutation_requests: HashMap<String, Box<[u8]>>,
 }
