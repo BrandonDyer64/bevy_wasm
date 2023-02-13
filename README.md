@@ -15,6 +15,8 @@ Mod your Bevy games with WebAssembly!
 
 See [examples/cubes](https://github.com/BrandonDyer64/bevy_wasm/tree/main/examples/cubes) for a comprehensive example of how to use this.
 
+[Changelog](https://github.com/BrandonDyer64/bevy_wasm/blob/main/CHANGELOG.md)
+
 ## Protocol
 
 Our protocol crate defines the two message types for communicating between the game and mods.
