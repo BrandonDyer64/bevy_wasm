@@ -4,6 +4,7 @@ use cubes_protocol::{HostMessage, ModMessage, PROTOCOL_VERSION};
 const MOD_STATE: u64 = 0xa6e79eb9; // Should be unique to each mod
 
 #[no_mangle]
+#[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn build_app() {
     info!("Hello from build_app inside mod_with_bevy!");
     App::new()
@@ -65,14 +66,12 @@ fn update_cube(
 
 fn listen_for_message(mut events: EventReader<HostMessage>, mut resource: ResMut<CubePosition>) {
     for event in events.iter() {
-        match event {
-            HostMessage::SpawnedCube {
-                entity_id,
-                mod_state: MOD_STATE, // Must be for us
-            } => {
-                resource.entity_id = Some(*entity_id);
-            }
-            _ => {}
+        if let HostMessage::SpawnedCube {
+            entity_id,
+            mod_state: MOD_STATE, // Must be for us
+        } = event
+        {
+            resource.entity_id = Some(*entity_id);
         }
     }
 }

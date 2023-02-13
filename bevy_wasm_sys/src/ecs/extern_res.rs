@@ -145,6 +145,12 @@ impl ExternResources {
     }
 }
 
+impl Default for ExternResources {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Use a resource from the host game
 #[derive(SystemParam)]
 pub struct ExternRes<'w, 's, T: Resource + Serialize + DeserializeOwned> {

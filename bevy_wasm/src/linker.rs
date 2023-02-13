@@ -9,7 +9,7 @@ use wasmtime::*;
 use crate::mod_state::ModState;
 
 pub(crate) fn build_linker(engine: &Engine, protocol_version: Version) -> Result<Linker<ModState>> {
-    let mut linker: Linker<ModState> = Linker::new(&engine);
+    let mut linker: Linker<ModState> = Linker::new(engine);
 
     linker.func_wrap(
         "host",
@@ -23,7 +23,7 @@ pub(crate) fn build_linker(engine: &Engine, protocol_version: Version) -> Result
             let Some(data) = mem
                 .data(&caller)
                 .get(msg as u32 as usize..)
-                .and_then(|arr| arr.get(..len as u32 as usize)) else {
+                .and_then(|arr| arr.get(..len as usize)) else {
                     error!("Failed to get data from memory");
                     return;
                 };
@@ -45,7 +45,7 @@ pub(crate) fn build_linker(engine: &Engine, protocol_version: Version) -> Result
             let Some(data) = mem
                 .data(&caller)
                 .get(msg as u32 as usize..)
-                .and_then(|arr| arr.get(..len as u32 as usize)) else {
+                .and_then(|arr| arr.get(..len as usize)) else {
                     error!("Failed to get data from memory");
                     return;
                 };
@@ -67,7 +67,7 @@ pub(crate) fn build_linker(engine: &Engine, protocol_version: Version) -> Result
             let Some(data) = mem
                 .data(&caller)
                 .get(msg as u32 as usize..)
-                .and_then(|arr| arr.get(..len as u32 as usize)) else {
+                .and_then(|arr| arr.get(..len as usize)) else {
                     error!("Failed to get data from memory");
                     return;
                 };
@@ -97,7 +97,7 @@ pub(crate) fn build_linker(engine: &Engine, protocol_version: Version) -> Result
             let Some(data) = mem
                 .data(&caller)
                 .get(msg as u32 as usize..)
-                .and_then(|arr| arr.get(..len as u32 as usize))
+                .and_then(|arr| arr.get(..len as usize))
                 .map(|x| x.into()) else {
                     error!("Failed to get data from memory");
                     return;
@@ -120,7 +120,7 @@ pub(crate) fn build_linker(engine: &Engine, protocol_version: Version) -> Result
             let Some(buffer) = mem
                 .data_mut(&mut caller)
                 .get_mut(arena as u32 as usize..)
-                .and_then(|arr| arr.get_mut(..len as u32 as usize)) else {
+                .and_then(|arr| arr.get_mut(..len as usize)) else {
                     error!("Failed to get data from memory");
                     return 0;
                 };
@@ -146,7 +146,7 @@ pub(crate) fn build_linker(engine: &Engine, protocol_version: Version) -> Result
             let Some(name) = mem
                 .data(&caller)
                 .get(name as u32 as usize..)
-                .and_then(|arr| arr.get(..name_len as u32 as usize)) else {
+                .and_then(|arr| arr.get(..name_len as usize)) else {
                     error!("Failed to get data from memory");
                     return 0;
                 };
@@ -163,7 +163,7 @@ pub(crate) fn build_linker(engine: &Engine, protocol_version: Version) -> Result
             let Some(buffer) = mem
                 .data_mut(&mut caller)
                 .get_mut(buffer as u32 as usize..)
-                .and_then(|arr| arr.get_mut(..buffer_len as u32 as usize)) else {
+                .and_then(|arr| arr.get_mut(..buffer_len as usize)) else {
                     error!("Failed to get data from memory");
                     return 0;
                 };
@@ -205,7 +205,7 @@ pub(crate) fn build_linker(engine: &Engine, protocol_version: Version) -> Result
             let Some(data) = mem
                 .data(&caller)
                 .get(msg as u32 as usize..)
-                .and_then(|arr| arr.get(..len as u32 as usize)) else {
+                .and_then(|arr| arr.get(..len as usize)) else {
                     error!("Failed to get data from memory");
                     return;
                 };

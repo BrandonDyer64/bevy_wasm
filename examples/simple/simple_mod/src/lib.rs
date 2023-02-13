@@ -2,6 +2,7 @@ use bevy_wasm_sys::prelude::*;
 use simple_protocol::{GameMessage, ModMessage, PROTOCOL_VERSION};
 
 #[no_mangle]
+#[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn build_app() {
     App::new()
         .add_plugin(FFIPlugin::<GameMessage, ModMessage>::new(PROTOCOL_VERSION))

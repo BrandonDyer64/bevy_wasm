@@ -417,6 +417,12 @@ impl Time {
     }
 }
 
+impl Default for Time {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 fn duration_div_rem(dividend: Duration, divisor: Duration) -> (u32, Duration) {
     // `Duration` does not have a built-in modulo operation
     let quotient = (dividend.as_nanos() / divisor.as_nanos()) as u32;

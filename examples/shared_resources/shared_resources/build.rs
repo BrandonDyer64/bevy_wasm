@@ -12,13 +12,13 @@ fn build_wasm_pkg(name: &str) {
     let out_dir = std::env::var("OUT_DIR").unwrap();
     let dest_path = std::path::Path::new(&out_dir);
     let status = Command::new("cargo")
-        .args(&["build"])
-        .args(&["--profile", "release-wasm"])
-        .args(&["--package", name])
-        .args(&["--target", "wasm32-unknown-unknown"])
-        .args(&[
+        .args(["build"])
+        .args(["--profile", "release-wasm"])
+        .args(["--package", name])
+        .args(["--target", "wasm32-unknown-unknown"])
+        .args([
             "--target-dir",
-            &dest_path
+            dest_path
                 .join("scripts_target")
                 .join(name)
                 .to_str()
@@ -31,8 +31,8 @@ fn build_wasm_pkg(name: &str) {
         dest_path
             .join("scripts_target")
             .join(name)
-            .join(&format!("wasm32-unknown-unknown/release-wasm/{name}.wasm")),
-        dest_path.join(&format!("{name}.wasm")),
+            .join(format!("wasm32-unknown-unknown/release-wasm/{name}.wasm")),
+        dest_path.join(format!("{name}.wasm")),
     )
     .unwrap();
 }

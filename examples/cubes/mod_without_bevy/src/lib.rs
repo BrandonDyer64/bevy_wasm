@@ -17,6 +17,7 @@ struct AppState {
 }
 
 #[no_mangle]
+#[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn build_app() {
     info!("Hello from build_app inside mod_without_bevy!");
     let app_state = AppState {
@@ -38,6 +39,7 @@ pub unsafe extern "C" fn build_app() {
 }
 
 #[no_mangle]
+#[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn update(app_state: *mut c_void) {
     let app_state = app_state as *mut AppState;
     update_app_state(&mut *app_state);
@@ -52,14 +54,12 @@ fn update_app_state(app_state: &mut AppState) {
     app_state.x = -time.cos();
 
     while let Some(event) = get_next_event::<HostMessage>() {
-        match event {
-            HostMessage::SpawnedCube {
-                mod_state: MOD_STATE,
-                entity_id,
-            } => {
-                app_state.entity_id = Some(entity_id);
-            }
-            _ => {}
+        if let HostMessage::SpawnedCube {
+            entity_id,
+            mod_state: MOD_STATE, // Must be for us
+        } = event
+        {
+            app_state.entity_id = Some(entity_id);
         }
     }
 

@@ -48,9 +48,8 @@ impl<In: Message, Out: Message> FFIPlugin<In, Out> {
         Self {
             protocol_version,
             protocol_version_checker: Box::new(|host_version, mod_version| {
-                (true)
                 // Check that the names match
-                && host_version.name_hash == mod_version.name_hash
+                host_version.name_hash == mod_version.name_hash
                 // Check that the major versions match
                 && host_version.major == mod_version.major
             }),

@@ -6,13 +6,13 @@ fn main() {
     let out_dir = std::env::var("OUT_DIR").unwrap();
     let dest_path = std::path::Path::new(&out_dir);
     let status = Command::new("cargo")
-        .args(&["build"])
-        .args(&["--profile", "release-wasm"])
-        .args(&["--package", "simple_mod"])
-        .args(&["--target", "wasm32-unknown-unknown"])
-        .args(&[
+        .args(["build"])
+        .args(["--profile", "release-wasm"])
+        .args(["--package", "simple_mod"])
+        .args(["--target", "wasm32-unknown-unknown"])
+        .args([
             "--target-dir",
-            &dest_path.join("scripts_target").to_str().unwrap(),
+            dest_path.join("scripts_target").to_str().unwrap(),
         ])
         .status()
         .unwrap();

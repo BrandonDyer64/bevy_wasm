@@ -27,6 +27,11 @@ extern "C" {
     ) -> usize;
 }
 
+/// This function is called by the host every frame.
+///
+/// # Safety
+///
+/// `app` is assumed to be a valid pointer to an [`App`].
 #[cfg(feature = "bevy")]
 #[no_mangle]
 pub unsafe extern "C" fn update(app: *mut c_void) {

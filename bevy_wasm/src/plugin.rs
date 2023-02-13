@@ -54,7 +54,7 @@ impl<In: Message, Out: Message> WasmPlugin<In, Out> {
             protocol_version.patch,
         );
         WasmPlugin {
-            protocol_version: protocol_version.into(),
+            protocol_version,
             shared_resources: Vec::new(),
             _in: std::marker::PhantomData,
             _out: std::marker::PhantomData,
@@ -72,7 +72,7 @@ impl<In: Message, Out: Message> WasmPlugin<In, Out> {
 
 impl<In: Message, Out: Message> Plugin for WasmPlugin<In, Out> {
     fn build(&self, app: &mut App) {
-        let wasm_resource = WasmEngine::new(self.protocol_version.clone().into());
+        let wasm_resource = WasmEngine::new(self.protocol_version);
 
         app.insert_resource(wasm_resource)
             .add_event::<In>()

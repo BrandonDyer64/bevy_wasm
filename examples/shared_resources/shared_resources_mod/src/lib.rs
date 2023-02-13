@@ -2,6 +2,7 @@ use bevy_wasm_sys::{ecs::extern_res::ExternResources, prelude::*};
 use shared_resources_protocol::{HostMessage, ModMessage, MyCoolResource, PROTOCOL_VERSION};
 
 #[no_mangle]
+#[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn build_app() {
     info!("Hello from build_app inside mod_with_bevy!");
     App::new()
