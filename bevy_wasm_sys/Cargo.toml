@@ -7,7 +7,7 @@ license = "MIT OR Apache-2.0"
 name = "bevy_wasm_sys"
 readme = "../README.md"
 repository = "https://github.com/BrandonDyer64/bevy_wasm"
-version = "0.9.8"
+version = "0.9.9"
 
 [features]
 bevy = ["bevy_app", "bevy_derive", "bevy_ecs", "bevy_math", "bevy_reflect", "bevy_transform"]
