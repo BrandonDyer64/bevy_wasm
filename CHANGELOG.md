@@ -5,6 +5,7 @@
 -   Code is now dual licensed under Apache-2.0 and MIT.
 -   Added [anyhow](https://crates.io/crates/anyhow)
 -   Removed unwraps
+-   Added GitHub Actions workflow
 
 ## 0.9.8
 
