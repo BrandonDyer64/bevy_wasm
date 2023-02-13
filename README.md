@@ -189,7 +189,6 @@ See [examples/shared_resources](https://github.com/BrandonDyer64/bevy_wasm/tree/
 | ✅  | Direct update control                            |
 | ✅  | Mod unloading                                    |
 | ✅  | Mod discrimination (events aren't broadcast all) |
-| ✅  | Mutable Extern Resource                          |
 | ⬜  | Extern Query                                     |
 | ⬜  | Custom FFI                                       |
 | ⬜  | Synced time                                      |

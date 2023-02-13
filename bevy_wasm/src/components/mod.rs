@@ -1,5 +1,5 @@
 //! Components
 
-pub use wasm_mod::{ModTickResponse, WasmMod};
+pub use wasm_mod::WasmMod;
 
 mod wasm_mod;

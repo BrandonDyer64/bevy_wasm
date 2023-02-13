@@ -25,7 +25,6 @@ extern "C" {
         buffer: *const u8,
         buffer_len: usize,
     ) -> usize;
-    pub fn mutate_resource(name: *const u8, name_len: usize, buffer: *const u8, buffer_len: usize);
 }
 
 #[cfg(feature = "bevy")]

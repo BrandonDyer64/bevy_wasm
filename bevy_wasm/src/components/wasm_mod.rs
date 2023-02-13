@@ -26,7 +26,6 @@ impl WasmMod {
                 events_out: Vec::new(),
                 events_in: VecDeque::new(),
                 shared_resource_values: HashMap::new(),
-                resource_mutation_requests: HashMap::new(),
             },
         );
         let instance = build_linker(&engine.engine(), engine.protocol_version())
@@ -49,7 +48,7 @@ impl WasmMod {
     }
 
     /// Tick the internal mod state
-    pub(crate) fn tick(&mut self, events_in: &[Arc<[u8]>]) -> Result<ModTickResponse> {
+    pub(crate) fn tick(&mut self, events_in: &[Arc<[u8]>]) -> Result<Vec<Box<[u8]>>> {
         for event in events_in.iter() {
             self.store.data_mut().events_in.push_back(event.clone());
         }
@@ -63,13 +62,8 @@ impl WasmMod {
             .context("Failed to call update")?;
 
         let serialized_events_out = std::mem::take(&mut self.store.data_mut().events_out);
-        let resource_mutation_requests =
-            std::mem::take(&mut self.store.data_mut().resource_mutation_requests);
 
-        Ok(ModTickResponse {
-            serialized_events_out,
-            resource_mutation_requests,
-        })
+        Ok(serialized_events_out)
     }
 
     /// Update the value of a shared resource as seen by the mod
@@ -80,13 +74,4 @@ impl WasmMod {
             .shared_resource_values
             .insert(resource_name.to_string(), resource_bytes);
     }
-}
-
-/// Result of a mod tick
-pub struct ModTickResponse {
-    /// Events that have been sent to the host
-    pub serialized_events_out: Vec<Box<[u8]>>,
-
-    /// Resources that have been requested to be mutated by the mod
-    pub resource_mutation_requests: HashMap<String, Arc<[u8]>>,
 }

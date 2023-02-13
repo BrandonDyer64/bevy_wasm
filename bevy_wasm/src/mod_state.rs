@@ -18,7 +18,4 @@ pub struct ModState {
 
     /// Resources that have changed since the last update
     pub shared_resource_values: HashMap<String, Arc<[u8]>>,
-
-    /// Resources that have been mutated by the mod
-    pub resource_mutation_requests: HashMap<String, Arc<[u8]>>,
 }

@@ -43,24 +43,6 @@ pub fn get_resource<T: Resource + Serialize + DeserializeOwned>() -> Option<T> {
     }
 }
 
-/// Request to mutate the value of a resource on the host
-pub fn mutate_resource<T: Resource + Serialize + DeserializeOwned>(new_value: T) {
-    let name = std::any::type_name::<T>();
-    let buffer = match bincode::serialize(&new_value) {
-        Ok(buffer) => buffer,
-        Err(err) => {
-            error!("Failed to serialize resource: {}", err);
-            return;
-        }
-    };
-
-    unsafe {
-        crate::ffi::mutate_resource(name.as_ptr(), name.len(), buffer.as_ptr(), buffer.len());
-    }
-
-    std::mem::drop(buffer);
-}
-
 trait AsAny {
     fn as_any(&self) -> &dyn Any;
 }
@@ -171,13 +153,6 @@ pub struct ExternRes<'w, 's, T: Resource + Serialize + DeserializeOwned> {
     t: PhantomData<T>,
     #[system_param(ignore)]
     marker: PhantomData<&'s ()>,
-}
-
-impl<'w, 's, T: Resource + Serialize + DeserializeOwned> ExternRes<'w, 's, T> {
-    /// Request to mutate the value of this resource on the host
-    pub fn mutate(&self, new_value: T) {
-        mutate_resource(new_value);
-    }
 }
 
 impl<'w, 's, T: Debug + Resource + Serialize + DeserializeOwned> Debug for ExternRes<'w, 's, T> {

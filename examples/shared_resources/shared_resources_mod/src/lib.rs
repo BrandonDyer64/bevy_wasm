@@ -20,8 +20,4 @@ fn startup_system(mut resources: ResMut<ExternResources>) {
 
 fn print_resource_value(resource: ExternRes<MyCoolResource>) {
     info!("{:?}", resource);
-    resource.mutate(MyCoolResource {
-        value: 0,
-        string: "Hello from Mod!".to_string(),
-    })
 }

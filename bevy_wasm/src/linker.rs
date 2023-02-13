@@ -174,44 +174,6 @@ pub(crate) fn build_linker(engine: &Engine, protocol_version: Version) -> Result
     )?;
     linker.func_wrap(
         "host",
-        "mutate_resource",
-        |mut caller: Caller<'_, ModState>,
-         name: i32,
-         name_len: u32,
-         buffer: i32,
-         buffer_len: u32| {
-            let mem = match caller.get_export("memory") {
-                Some(Extern::Memory(mem)) => mem,
-                _ => panic!("failed to find mod memory"),
-            };
-
-            let Some(name) = mem
-                .data(&caller)
-                .get(name as u32 as usize..)
-                .and_then(|arr| arr.get(..name_len as u32 as usize)) else {
-                    error!("Failed to get resource name from memory");
-                    return;
-                };
-
-            let name = unsafe { std::str::from_utf8_unchecked(name) }.to_string();
-
-            let Some(resource_bytes) = mem
-                .data(&caller)
-                .get(buffer as u32 as usize..)
-                .and_then(|arr| arr.get(..buffer_len as u32 as usize))
-                .map(|x| x.into()) else {
-                    error!("Failed to get resource buffer from memory");
-                    return;
-                };
-
-            caller
-                .data_mut()
-                .resource_mutation_requests
-                .insert(name, resource_bytes);
-        },
-    )?;
-    linker.func_wrap(
-        "host",
         "get_time_since_startup",
         |caller: Caller<'_, ModState>| -> u64 {
             let startup_time = caller.data().startup_time;

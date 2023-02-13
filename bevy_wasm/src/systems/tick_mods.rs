@@ -2,10 +2,7 @@ use std::sync::Arc;
 
 use bevy::prelude::*;
 
-use crate::{
-    prelude::{ModTickResponse, WasmMod},
-    Message,
-};
+use crate::{prelude::WasmMod, Message};
 
 pub fn tick_mods<In: Message, Out: Message>(
     mut events_in: EventReader<In>,
@@ -19,17 +16,14 @@ pub fn tick_mods<In: Message, Out: Message>(
         .collect();
 
     for mut wasm_mod in wasm_mods.iter_mut() {
-        let tick_response = match wasm_mod.tick(serialized_events_in.as_slice()) {
+        let serialized_events_out = match wasm_mod.tick(serialized_events_in.as_slice()) {
             Ok(events) => events,
             Err(err) => {
                 error!("Error while ticking mod: {}", err);
                 continue;
             }
         };
-        let ModTickResponse {
-            serialized_events_out,
-            resource_mutation_requests,
-        } = tick_response;
+
         for serialized_event_out in serialized_events_out {
             match bincode::deserialize(&serialized_event_out) {
                 Ok(event_out) => events_out.send(event_out),
