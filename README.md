@@ -2,6 +2,11 @@
 
 Mod your Bevy games with WebAssembly!
 
+[![CI](https://github.com/BrandonDyer64/bevy_wasm/actions/workflows/rust.yml/badge.svg?branch=main)](https://github.com/BrandonDyer64/bevy_wasm/actions)
+[![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](https://github.com/BrandonDyer64/bevy_wasm#license)
+[![Crates.io](https://img.shields.io/crates/d/bevy_wasm.svg?color=blue)](https://crates.io/crates/bevy_wasm)<br/>
+[![Bevy](https://img.shields.io/badge/bevy-v0.9-blueviolet)](https://crates.io/crates/bevy)
+
 |                    |                                                                                                                                                                                            |               |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------- |
 | `bevy_wasm`        | [![](https://img.shields.io/crates/v/bevy_wasm.svg)](https://crates.io/crates/bevy_wasm) [![](https://docs.rs/bevy_wasm/badge.svg)](https://docs.rs/bevy_wasm)                             | For games     |
