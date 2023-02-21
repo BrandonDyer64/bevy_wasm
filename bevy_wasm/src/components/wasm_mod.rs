@@ -4,7 +4,7 @@ use anyhow::{Context, Result};
 use bevy::{prelude::*, utils::HashMap};
 use wasmtime::*;
 
-use crate::{linker::build_linker, mod_state::ModState, prelude::WasmEngine};
+use crate::{linker::build_linker, mod_state::ModState, prelude::WasmEngine, SharedResource};
 
 /// A WebAssembly mod
 #[derive(Component)]
@@ -67,11 +67,9 @@ impl WasmMod {
     }
 
     /// Update the value of a shared resource as seen by the mod
-    pub fn update_resource_value(&mut self, resource_name: &String, resource_bytes: Arc<[u8]>) {
+    pub fn update_resource_value<T: SharedResource>(&mut self, bytes: Arc<[u8]>) {
         let state = self.store.data_mut();
 
-        state
-            .shared_resource_values
-            .insert(resource_name.to_string(), resource_bytes);
+        state.shared_resource_values.insert(T::TYPE_UUID, bytes);
     }
 }

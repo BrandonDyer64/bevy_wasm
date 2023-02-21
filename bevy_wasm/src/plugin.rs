@@ -3,19 +3,18 @@
 use bevy::prelude::*;
 use bevy_wasm_shared::prelude::*;
 use colored::*;
-use serde::{de::DeserializeOwned, Serialize};
 
-use crate::{resources::WasmEngine, systems, Message};
+use crate::{resources::WasmEngine, systems, Message, SharedResource};
 
 trait AddSystemToApp: Send + Sync + 'static {
     fn add_system_to_app(&self, app: &mut App);
 }
 
-struct ResourceUpdater<R: Resource + Serialize + DeserializeOwned> {
+struct ResourceUpdater<R: SharedResource> {
     _r: std::marker::PhantomData<R>,
 }
 
-impl<R: Resource + Serialize + DeserializeOwned> AddSystemToApp for ResourceUpdater<R> {
+impl<R: SharedResource> AddSystemToApp for ResourceUpdater<R> {
     fn add_system_to_app(&self, app: &mut App) {
         app.add_system(systems::update_shared_resource::<R>);
     }
@@ -62,7 +61,7 @@ impl<In: Message, Out: Message> WasmPlugin<In, Out> {
     }
 
     /// Register a resource to be shared with mods. THIS SHOULD COME FROM YOUR PROTOCOL CRATE
-    pub fn share_resource<T: Resource + Serialize + DeserializeOwned>(mut self) -> Self {
+    pub fn share_resource<T: SharedResource>(mut self) -> Self {
         self.shared_resources.push(Box::new(ResourceUpdater::<T> {
             _r: std::marker::PhantomData,
         }));

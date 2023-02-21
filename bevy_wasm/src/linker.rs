@@ -1,7 +1,7 @@
 use std::time::Instant;
 
 use anyhow::Result;
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::Uuid};
 use bevy_wasm_shared::prelude::*;
 use colored::*;
 use wasmtime::*;
@@ -133,8 +133,8 @@ pub(crate) fn build_linker(engine: &Engine, protocol_version: Version) -> Result
         "host",
         "get_resource",
         |mut caller: Caller<'_, ModState>,
-         name: i32,
-         name_len: u32,
+         uuid_0: u64,
+         uuid_1: u64,
          buffer: i32,
          buffer_len: u32|
          -> u32 {
@@ -143,17 +143,8 @@ pub(crate) fn build_linker(engine: &Engine, protocol_version: Version) -> Result
                 _ => panic!("failed to find mod memory"),
             };
 
-            let Some(name) = mem
-                .data(&caller)
-                .get(name as u32 as usize..)
-                .and_then(|arr| arr.get(..name_len as usize)) else {
-                    error!("Failed to get data from memory");
-                    return 0;
-                };
-
-            let name = unsafe { std::str::from_utf8_unchecked(name) }.to_string();
-
-            let resource_bytes = caller.data_mut().shared_resource_values.remove(&name);
+            let uuid = Uuid::from_u64_pair(uuid_0, uuid_1);
+            let resource_bytes = caller.data_mut().shared_resource_values.remove(&uuid);
 
             let resource_bytes = match resource_bytes {
                 Some(resource_bytes) => resource_bytes,

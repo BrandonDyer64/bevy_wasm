@@ -9,18 +9,25 @@ use std::{
 };
 
 use bevy_ecs::{prelude::*, system::SystemParam};
+use bevy_reflect::TypeUuid;
 use serde::{de::DeserializeOwned, Serialize};
 
 use crate::error;
 
+/// A resource that can be shared from the Host
+pub trait SharedResource: Resource + Serialize + DeserializeOwned + TypeUuid {}
+
+impl<T: Resource + Serialize + DeserializeOwned + TypeUuid> SharedResource for T {}
+
 /// Get the value of a resource from the host
-pub fn get_resource<T: Resource + Serialize + DeserializeOwned>() -> Option<T> {
-    let name = std::any::type_name::<T>();
+pub fn get_resource<T: SharedResource>() -> Option<T> {
+    let (uuid_0, uuid_1) = T::TYPE_UUID.as_u64_pair();
+
     let mut buffer = [0; 1024];
 
     let len = unsafe {
         // put serialized resource into buffer
-        crate::ffi::get_resource(name.as_ptr(), name.len(), buffer.as_mut_ptr(), buffer.len())
+        crate::ffi::get_resource(uuid_0, uuid_1, buffer.as_mut_ptr(), buffer.len())
     };
 
     if len == 0 {
@@ -67,9 +74,11 @@ trait ResourceFetch: Send + Sync {
     fn fetch(&mut self) -> Option<Box<dyn AnyResource>>;
 }
 
-struct ExternResourceFetchImpl<T: Resource + DeserializeOwned + Send + Sync>(PhantomData<T>);
+struct ExternResourceFetchImpl<T: Resource + DeserializeOwned + Send + Sync + TypeUuid>(
+    PhantomData<T>,
+);
 
-impl<T: Resource + Serialize + DeserializeOwned + Send + Sync> ResourceFetch
+impl<T: Resource + Serialize + DeserializeOwned + Send + Sync + TypeUuid> ResourceFetch
     for ExternResourceFetchImpl<T>
 {
     fn fetch(&mut self) -> Option<Box<dyn AnyResource>> {
@@ -83,7 +92,7 @@ struct ExternResourceValue {
 }
 
 impl ExternResourceValue {
-    pub fn init<T: Resource + Serialize + DeserializeOwned>() -> Self {
+    pub fn init<T: SharedResource>() -> Self {
         Self {
             value: match get_resource::<T>() {
                 Some(v) => Some(Box::new(v)),
@@ -129,7 +138,7 @@ impl ExternResources {
         }
     }
 
-    pub fn insert<T: Resource + Serialize + DeserializeOwned>(&mut self) {
+    pub fn insert<T: SharedResource>(&mut self) {
         self.resources
             .insert(TypeId::of::<T>(), ExternResourceValue::init::<T>());
     }
