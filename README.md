@@ -23,7 +23,7 @@ Our protocol crate defines the two message types for communicating between the g
 
 ```toml
 [dependencies]
-bevy_wasm_shared = "0.9"
+bevy_wasm_shared = "0.10"
 serde = { version = "1.0", features = ["derive"] }
 ```
 
@@ -53,8 +53,8 @@ Our game will import `WasmPlugin` from [`bevy_wasm`](https://crates.io/crates/be
 
 ```toml
 [dependencies]
-bevy = "0.9"
-bevy_wasm = "0.9"
+bevy = "0.10"
+bevy_wasm = "0.10"
 my_game_protocol = { git = "https://github.com/username/my_game_protocol" }
 ```
 
@@ -99,7 +99,7 @@ Our mod will import `FFIPlugin` from [`bevy_wasm_sys`](https://crates.io/crates/
 
 ```toml
 [dependencies]
-bevy_wasm_sys = "0.9"
+bevy_wasm_sys = "0.10"
 my_game_protocol = { git = "https://github.com/username/my_game_protocol" }
 ```
 

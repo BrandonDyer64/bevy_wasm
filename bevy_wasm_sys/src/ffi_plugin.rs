@@ -2,10 +2,9 @@
 
 use std::ffi::c_void;
 
-use bevy_app::{App, CoreStage, Plugin};
+use bevy_app::{App, Plugin};
 use bevy_ecs::{
     prelude::{EventReader, EventWriter},
-    schedule::IntoSystemDescriptor,
     system::ResMut,
 };
 use bevy_wasm_shared::prelude::*;
@@ -95,10 +94,14 @@ impl<In: Message, Out: Message> Plugin for FFIPlugin<In, Out> {
             .add_event::<Out>()
             .insert_resource(Time::new())
             .insert_resource(ExternResources::new())
-            .add_system_to_stage(CoreStage::First, update_time.at_start())
-            .add_system_to_stage(CoreStage::PreUpdate, fetch_resources)
-            .add_system_to_stage(CoreStage::PreUpdate, event_listener::<In>)
-            .add_system_to_stage(CoreStage::PostUpdate, event_sender::<Out>);
+            .add_system(update_time)
+            .add_system(fetch_resources)
+            .add_system(event_listener::<In>)
+            .add_system(event_sender::<Out>);
+        // .add_system_to_stage(CoreStage::First, update_time.at_start())
+        // .add_system_to_stage(CoreStage::PreUpdate, fetch_resources)
+        // .add_system_to_stage(CoreStage::PreUpdate, event_listener::<In>)
+        // .add_system_to_stage(CoreStage::PostUpdate, event_sender::<Out>);
     }
 }
 

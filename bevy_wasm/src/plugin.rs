@@ -23,7 +23,7 @@ impl<R: SharedResource> AddSystemToApp for ResourceUpdater<R> {
 /// Add this plugin to your Bevy app to enable WASM-based modding
 ///
 /// Give [`WasmPlugin::new`] a list of wasm files to load at startup.
-/// Further mods can be added at any time with [`WasmResource::insert_wasm`].
+/// Further mods can be added at any time with [`WasmMod::new()`].
 pub struct WasmPlugin<In, Out>
 where
     In: Message,

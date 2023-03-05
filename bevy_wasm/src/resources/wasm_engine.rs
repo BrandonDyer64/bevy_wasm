@@ -5,8 +5,6 @@ use wasmtime::*;
 /// Holds the internal Wasmtime [`Engine`]
 ///
 /// It is currently very bare-bones, and will be expanded in the future.
-///
-/// Insert a new mod at any time with [`WasmEngine::insert_wasm`].
 #[derive(Resource)]
 pub struct WasmEngine {
     protocol_version: Version,

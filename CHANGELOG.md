@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.0
+
+-   Upgraded to Bevy v0.10
+
 ## 0.9.9
 
 -   Code is now dual licensed under Apache-2.0 and MIT.
