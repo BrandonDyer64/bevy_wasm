@@ -20,4 +20,4 @@ wasmtime = "5"
 
 [dependencies.bevy]
 default-features = false
-git = "https://github.com/bevyengine/bevy"
+version = "0.10"

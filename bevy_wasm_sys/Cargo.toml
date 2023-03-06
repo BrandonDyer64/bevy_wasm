@@ -14,12 +14,12 @@ bevy = ["bevy_app", "bevy_derive", "bevy_ecs", "bevy_math", "bevy_reflect", "bev
 default = ["bevy"]
 
 [dependencies]
-bevy_app = {git = "https://github.com/bevyengine/bevy", optional = true}
-bevy_derive = {git = "https://github.com/bevyengine/bevy", optional = true}
-bevy_ecs = {git = "https://github.com/bevyengine/bevy", optional = true}
-bevy_math = {git = "https://github.com/bevyengine/bevy", optional = true}
-bevy_reflect = {git = "https://github.com/bevyengine/bevy", optional = true}
-bevy_transform = {git = "https://github.com/bevyengine/bevy", optional = true, features = ["serialize"]}
+bevy_app = {version = "0.10", optional = true}
+bevy_derive = {version = "0.10", optional = true}
+bevy_ecs = {version = "0.10", optional = true}
+bevy_math = {version = "0.10", optional = true}
+bevy_reflect = {version = "0.10", optional = true}
+bevy_transform = {version = "0.10", optional = true, features = ["serialize"]}
 bevy_wasm_shared = {path = "../bevy_wasm_shared", version = "0.10"}
 bincode = "1.3"
 serde = "1.0"

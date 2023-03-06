@@ -7,6 +7,6 @@ publish = false
 version = "0.1.0"
 
 [dependencies]
-bevy = {git = "https://github.com/bevyengine/bevy"}
+bevy = "0.10"
 bevy_wasm = {path = "../../../bevy_wasm"}
 shared_resources_protocol = {path = "../shared_resources_protocol"}
