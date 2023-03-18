@@ -11,11 +11,11 @@ use bevy::{prelude::Resource, reflect::TypeUuid};
 use serde::{de::DeserializeOwned, Serialize};
 
 pub mod components;
-mod linker;
 mod mod_state;
 pub mod plugin;
-pub mod resources;
+mod runtime;
 mod systems;
+mod wasm_asset;
 
 /// Any data type that can be used as a Host <-> Mod message
 ///
@@ -35,6 +35,6 @@ impl<T> SharedResource for T where T: Resource + Serialize + DeserializeOwned + 
 
 /// Convinience exports
 pub mod prelude {
-    pub use crate::{components::*, plugin::WasmPlugin, resources::WasmEngine, Message};
+    pub use crate::{components::*, plugin::WasmPlugin, Message};
     pub use bevy_wasm_shared::prelude::*;
 }

@@ -196,12 +196,12 @@ See [examples/shared_resources](https://github.com/BrandonDyer64/bevy_wasm/tree/
 | ✅  | Direct update control                            |
 | ✅  | Mod unloading                                    |
 | ✅  | Mod discrimination (events aren't broadcast all) |
+| ✅  | Browser support                                  |
 | ⬜  | Extern Query                                     |
 | ⬜  | Custom FFI                                       |
 | ⬜  | Synced time                                      |
 | ⬜  | Mod hotloading                                   |
 | ⬜  | Automatic component syncing                      |
-| ⬜  | Browser support                                  |
 
 ## License
 

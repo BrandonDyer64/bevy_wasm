@@ -16,7 +16,7 @@ fn main() {
 }
 
 fn insert_mods(mut commands: Commands, wasm_engine: Res<WasmEngine>) {
-    commands.spawn(WasmMod::new(&wasm_engine, MOD_WASM).unwrap());
+    commands.spawn(WasmModInternal::new(&wasm_engine, MOD_WASM).unwrap());
 }
 
 fn listen_for_mod_messages(mut events: EventReader<ModMessage>) {
