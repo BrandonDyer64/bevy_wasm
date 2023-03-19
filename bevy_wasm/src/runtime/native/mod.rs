@@ -1,9 +1,9 @@
-use std::{collections::VecDeque, sync::Arc, time::Instant};
+use std::{collections::VecDeque, sync::Arc};
 
 use anyhow::{Context, Result};
 use bevy::{
     prelude::{Component, Resource},
-    utils::HashMap,
+    utils::{HashMap, Instant},
 };
 use bevy_wasm_shared::version::Version;
 use wasmtime::*;
