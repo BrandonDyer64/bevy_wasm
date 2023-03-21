@@ -20,9 +20,10 @@ where
 {
     let closure = Closure::new(closure);
     Reflect::set(target, &JsValue::from_str(name), closure.as_ref()).unwrap();
-    Box::leak(Box::new(closure));
+    Box::leak(Box::new(closure)); // TODO: Don't just leak the closures.
 }
 
+#[allow(clippy::redundant_clone)]
 pub fn build_linker(
     protocol_version: Version,
     mod_state: Arc<RwLock<ModState>>,
@@ -126,20 +127,13 @@ pub fn build_linker(
         let mod_state = mod_state.clone();
         let memory = memory.clone();
         move |uuid_0, uuid_1, buffer_ptr, buffer_len| -> u32 {
-            info!(
-                "get_resource {} {} {} {}",
-                uuid_0, uuid_1, buffer_ptr, buffer_len
-            );
             let uuid = Uuid::from_u64_pair(uuid_0, uuid_1);
-            info!("{:?}", mod_state.read().unwrap().shared_resource_values);
             let resource_bytes = mod_state
                 .write()
                 .unwrap()
                 .shared_resource_values
                 .remove(&uuid);
-            info!("{uuid} {:?}", resource_bytes);
             let Some(resource_bytes) = resource_bytes else { return 0 };
-            info!("WE HAVE RESOURCE BYTES {}", resource_bytes.len());
             if resource_bytes.len() > buffer_len as usize {
                 error!("Serialized event is too long");
                 return 0;

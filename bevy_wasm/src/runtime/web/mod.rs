@@ -1,20 +1,18 @@
 use std::{
     collections::VecDeque,
-    future::Future,
     sync::{Arc, RwLock},
 };
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::Result;
 use bevy::{
     prelude::{info, Component, Resource},
     utils::{HashMap, Instant},
 };
 use js_sys::{
-    Function, Object, Reflect,
+    Function, Reflect,
     WebAssembly::{self, Instance},
 };
 use wasm_bindgen::{prelude::Closure, JsCast, JsValue};
-use wasm_bindgen_futures::JsFuture;
 
 use bevy_wasm_shared::version::Version;
 use web_sys::console;
@@ -84,8 +82,8 @@ impl WasmRuntime {
         Ok(WasmInstance {
             instance,
             mod_state,
-            then,
-            catch,
+            _then: then,
+            _catch: catch,
         })
     }
 }
@@ -94,8 +92,8 @@ impl WasmRuntime {
 pub struct WasmInstance {
     instance: Arc<RwLock<Option<Instance>>>,
     mod_state: Arc<RwLock<ModState>>,
-    then: Closure<dyn FnMut(JsValue)>,
-    catch: Closure<dyn FnMut(JsValue)>,
+    _then: Closure<dyn FnMut(JsValue)>,
+    _catch: Closure<dyn FnMut(JsValue)>,
 }
 
 unsafe impl Send for WasmInstance {}
@@ -120,7 +118,7 @@ impl WasmInstance {
             .and_then(|x| x.dyn_into())
             .expect("build_app export wasn't a function");
         match update.call1(&JsValue::undefined(), &JsValue::from_f64(app_ptr as f64)) {
-            Ok(o) => console::log_1(&o),
+            Ok(_) => {}
             Err(e) => console::error_1(&e),
         }
 
@@ -130,7 +128,6 @@ impl WasmInstance {
     }
 
     pub fn update_resource_value<T: SharedResource>(&mut self, bytes: Arc<[u8]>) {
-        info!("Update shared resource value {}", T::TYPE_UUID);
         self.mod_state
             .write()
             .unwrap()

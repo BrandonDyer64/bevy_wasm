@@ -92,7 +92,7 @@ impl ExternResourceValue {
         Self {
             value: match get_resource::<T>() {
                 Some(v) => Box::new(v),
-                None => Box::new(T::default()),
+                None => Box::<T>::default(),
             },
             fetcher: Box::new(ExternResourceFetchImpl::<T>(PhantomData)),
         }
@@ -106,7 +106,7 @@ impl ExternResourceValue {
 
     pub fn downcast_ref<T: Resource + Serialize + DeserializeOwned>(&self) -> Option<&T> {
         let boxed = self.value.as_ref();
-        (&*boxed as &(dyn AnyResource + 'static)).downcast_ref::<T>()
+        (boxed as &(dyn AnyResource + 'static)).downcast_ref::<T>()
     }
 }
 
@@ -119,7 +119,7 @@ pub struct ExternResources {
 impl Debug for ExternResources {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut debug = f.debug_map();
-        for (type_id, _resource_value) in &self.resources {
+        for type_id in self.resources.keys() {
             debug.entry(&type_id, &());
         }
         debug.finish()
