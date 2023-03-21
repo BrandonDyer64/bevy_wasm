@@ -2,9 +2,12 @@ use std::{ops::Deref, sync::Arc};
 
 use bevy::prelude::*;
 
-use crate::{components::WasmMod, SharedResource};
+use crate::{runtime::WasmInstance, SharedResource};
 
-pub fn update_shared_resource<T: SharedResource>(res: Res<T>, mut wasm_mods: Query<&mut WasmMod>) {
+pub fn update_shared_resource<T: SharedResource>(
+    res: Res<T>,
+    mut wasm_mods: Query<&mut WasmInstance>,
+) {
     if res.is_changed() {
         let v: &T = res.deref();
         let resource_bytes: Arc<[u8]> = match bincode::serialize(v) {

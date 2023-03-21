@@ -2,12 +2,12 @@ use std::sync::Arc;
 
 use bevy::prelude::*;
 
-use crate::{prelude::WasmMod, Message};
+use crate::{runtime::WasmInstance, Message};
 
 pub fn tick_mods<In: Message, Out: Message>(
     mut events_in: EventReader<In>,
     mut events_out: EventWriter<Out>,
-    mut wasm_mods: Query<&mut WasmMod>,
+    mut wasm_mods: Query<&mut WasmInstance>,
 ) {
     let serialized_events_in: Vec<Arc<[u8]>> = events_in
         .iter()

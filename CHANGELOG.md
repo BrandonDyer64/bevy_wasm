@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.10.1
+
+-   Browser support
+-   WASM files are now Assets
+
 ## 0.10.0
 
 -   Upgraded to Bevy v0.10

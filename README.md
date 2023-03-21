@@ -73,9 +73,13 @@ fn main() {
         .run();
 }
 
-fn add_mods(mut commands: Commands, wasm_engine: Res<WasmEngine>) {
-    commands.spawn(WasmMod::new(&wasm_engine, include_bytes!("some_mod.wasm")).unwrap());
-    commands.spawn(WasmMod::new(&wasm_engine, include_bytes!("some_other_mod.wasm")).unwrap());
+fn add_mods(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands.spawn(WasmMod {
+        wasm: asset_server.load("some_mod.wasm"),
+    });
+    commands.spawn(WasmMod {
+        wasm: asset_server.load("some_other_mod.wasm"),
+    })
 }
 
 fn listen_for_mod_messages(mut events: EventReader<ModMessage>) {
@@ -136,7 +140,7 @@ fn send_messages_to_game(mut events: EventWriter<ModMessage>) {
 **Protocol:**
 
 ```rust
-#[derive(Resource, Serialize, Deserialize)]
+#[derive(Resource, Default, Serialize, Deserialize)]
 pub struct MyResource {
     pub value: i32,
 }
@@ -196,12 +200,11 @@ See [examples/shared_resources](https://github.com/BrandonDyer64/bevy_wasm/tree/
 | ✅  | Direct update control                            |
 | ✅  | Mod unloading                                    |
 | ✅  | Mod discrimination (events aren't broadcast all) |
+| ✅  | Browser support                                  |
 | ⬜  | Extern Query                                     |
-| ⬜  | Custom FFI                                       |
 | ⬜  | Synced time                                      |
 | ⬜  | Mod hotloading                                   |
 | ⬜  | Automatic component syncing                      |
-| ⬜  | Browser support                                  |
 
 ## License
 

@@ -8,7 +8,7 @@ pub const PROTOCOL_VERSION: Version = version!();
 
 /// A resource that we want to share between the host and the mod
 // Must implement `Resource` and `Serialize`/`Deserialize`
-#[derive(Debug, Clone, Resource, Serialize, Deserialize, TypeUuid)]
+#[derive(Debug, Default, Clone, Resource, Serialize, Deserialize, TypeUuid)]
 #[uuid = "e6f89ac2-8299-4c0a-8754-c404f14dae44"]
 pub struct MyCoolResource {
     pub value: u32,

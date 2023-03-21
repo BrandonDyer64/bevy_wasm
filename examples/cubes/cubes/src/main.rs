@@ -2,9 +2,6 @@ use bevy::prelude::*;
 use bevy_wasm::prelude::*;
 use cubes_protocol::{HostMessage, ModMessage, PROTOCOL_VERSION};
 
-pub static MOD_1_WASM: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/mod_with_bevy.wasm"));
-pub static MOD_2_WASM: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/mod_without_bevy.wasm"));
-
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
@@ -15,9 +12,13 @@ fn main() {
         .run();
 }
 
-fn insert_mods(mut commands: Commands, wasm_engine: Res<WasmEngine>) {
-    commands.spawn(WasmMod::new(&wasm_engine, MOD_1_WASM).unwrap());
-    commands.spawn(WasmMod::new(&wasm_engine, MOD_2_WASM).unwrap());
+fn insert_mods(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands.spawn(WasmMod {
+        wasm: asset_server.load("mod_with_bevy.wasm"),
+    });
+    commands.spawn(WasmMod {
+        wasm: asset_server.load("mod_without_bevy.wasm"),
+    });
 }
 
 /// set up a simple 3D scene

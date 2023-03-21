@@ -4,7 +4,12 @@ use bevy::prelude::*;
 use bevy_wasm_shared::prelude::*;
 use colored::*;
 
-use crate::{resources::WasmEngine, systems, Message, SharedResource};
+use crate::{
+    runtime::WasmRuntime,
+    systems::{self, load_instances},
+    wasm_asset::{WasmAsset, WasmAssetLoader},
+    Message, SharedResource,
+};
 
 trait AddSystemToApp: Send + Sync + 'static {
     fn add_system_to_app(&self, app: &mut App);
@@ -71,11 +76,14 @@ impl<In: Message, Out: Message> WasmPlugin<In, Out> {
 
 impl<In: Message, Out: Message> Plugin for WasmPlugin<In, Out> {
     fn build(&self, app: &mut App) {
-        let wasm_resource = WasmEngine::new(self.protocol_version);
+        let wasm_resource = WasmRuntime::new(self.protocol_version);
 
         app.insert_resource(wasm_resource)
+            .add_asset::<WasmAsset>()
+            .init_asset_loader::<WasmAssetLoader>()
             .add_event::<In>()
             .add_event::<Out>()
+            .add_system(load_instances)
             .add_system(systems::tick_mods::<In, Out>);
 
         for system in self.shared_resources.iter() {
