@@ -66,10 +66,10 @@ impl WasmRuntime {
                 let build_app: Function = Reflect::get(exports.as_ref(), &"build_app".into())
                     .and_then(|x| x.dyn_into())
                     .expect("build_app export wasn't a function");
-                build_app.call0(&JsValue::undefined()).unwrap();
                 console::log_2(&instance_value, &memory_value);
                 *instance.write().unwrap() = Some(instance_value);
                 *memory.write().unwrap() = Some(memory_value);
+                build_app.call0(&JsValue::undefined()).unwrap();
             }
         });
         let catch = Closure::new({
@@ -100,9 +100,31 @@ unsafe impl Sync for WasmInstance {}
 
 impl WasmInstance {
     pub fn tick(&mut self, events_in: &[Arc<[u8]>]) -> Result<Vec<Box<[u8]>>> {
-        info!("Mod is ticking");
-        Ok(Vec::new())
+        let Some(instance) = self.instance.read().unwrap().clone() else { return Ok(Vec::new()) };
+        for event in events_in.iter() {
+            self.mod_state
+                .write()
+                .unwrap()
+                .events_in
+                .push_back(event.clone());
+        }
+
+        let app_ptr = self.mod_state.read().unwrap().app_ptr;
+
+        let exports = instance.exports();
+
+        let update: Function = Reflect::get(exports.as_ref(), &"update".into())
+            .and_then(|x| x.dyn_into())
+            .expect("build_app export wasn't a function");
+        update
+            .call1(&JsValue::undefined(), &JsValue::from_f64(app_ptr as f64))
+            .unwrap();
+
+        let serialized_events_out = std::mem::take(&mut self.mod_state.write().unwrap().events_out);
+
+        Ok(serialized_events_out)
     }
+
     pub fn update_resource_value<T: SharedResource>(&mut self, bytes: Arc<[u8]>) {
         self.mod_state
             .write()

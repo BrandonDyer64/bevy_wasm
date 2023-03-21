@@ -1,9 +1,9 @@
 use std::sync::{Arc, RwLock};
 
-use bevy::prelude::info;
+use bevy::prelude::{error, info, warn};
 use bevy_wasm_shared::version::Version;
 use colored::*;
-use js_sys::{Object, Reflect, WebAssembly};
+use js_sys::{Object, Reflect, Uint8Array, WebAssembly};
 use wasm_bindgen::{
     closure::{IntoWasmClosure, WasmClosure},
     prelude::{Closure, JsValue},
@@ -28,23 +28,41 @@ pub fn build_linker(
     let host = Object::new();
 
     link::<dyn FnMut(i32, u32)>(&host, "console_info", {
-        let _memory = memory.clone();
+        let memory = memory.clone();
         move |ptr, len| {
-            info!("CONSOLE INFO {} {}", ptr, len);
+            if let Some(memory) = memory.read().unwrap().as_ref() {
+                let buffer = Uint8Array::new(&memory.buffer())
+                    .slice(ptr as u32, ptr as u32 + len)
+                    .to_vec();
+                let text = std::str::from_utf8(&buffer).unwrap();
+                info!("MOD: {}", text);
+            }
         }
     });
 
     link::<dyn FnMut(i32, u32)>(&host, "console_warn", {
-        let _memory = memory.clone();
+        let memory = memory.clone();
         move |ptr, len| {
-            info!("CONSOLE WARN {} {}", ptr, len);
+            if let Some(memory) = memory.read().unwrap().as_ref() {
+                let buffer = Uint8Array::new(&memory.buffer())
+                    .slice(ptr as u32, ptr as u32 + len)
+                    .to_vec();
+                let text = std::str::from_utf8(&buffer).unwrap();
+                warn!("MOD: {}", text);
+            }
         }
     });
 
     link::<dyn FnMut(i32, u32)>(&host, "console_error", {
-        let _memory = memory.clone();
+        let memory = memory.clone();
         move |ptr, len| {
-            info!("CONSOLE ERROR {} {}", ptr, len);
+            if let Some(memory) = memory.read().unwrap().as_ref() {
+                let buffer = Uint8Array::new(&memory.buffer())
+                    .slice(ptr as u32, ptr as u32 + len)
+                    .to_vec();
+                let text = std::str::from_utf8(&buffer).unwrap();
+                error!("MOD: {}", text);
+            }
         }
     });
 
@@ -63,13 +81,38 @@ pub fn build_linker(
 
     link::<dyn FnMut(i32, u32) -> u32>(&host, "get_next_event", {
         let mod_state = mod_state.clone();
-        move |ptr, len| -> u32 { 0 }
+        let memory = memory.clone();
+        move |ptr: i32, len: u32| -> u32 {
+            let next_event = mod_state.write().unwrap().events_in.pop_front();
+            if let Some(next_event) = next_event {
+                if next_event.len() > len as usize {
+                    error!("Serialized event is too long");
+                    return 0;
+                }
+                let arr = Uint8Array::from(&next_event[..]);
+                if let Some(memory) = memory.read().unwrap().as_ref() {
+                    Uint8Array::new(&memory.buffer()).set(&arr, ptr as u32);
+                    next_event.len() as u32
+                } else {
+                    0
+                }
+            } else {
+                0
+            }
+        }
     });
 
     link::<dyn FnMut(i32, u32)>(&host, "send_serialized_event", {
         let mod_state = mod_state.clone();
         let memory = memory.clone();
-        move |ptr, len| {}
+        move |ptr, len| {
+            if let Some(memory) = memory.read().unwrap().as_ref() {
+                let buffer = Uint8Array::new(&memory.buffer())
+                    .slice(ptr as u32, ptr as u32 + len)
+                    .to_vec();
+                mod_state.write().unwrap().events_out.push(buffer.into());
+            }
+        }
     });
 
     link::<dyn FnMut() -> u64>(&host, "get_protocol_version", {
