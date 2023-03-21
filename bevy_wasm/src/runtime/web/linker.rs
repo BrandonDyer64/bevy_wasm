@@ -1,6 +1,9 @@
 use std::sync::{Arc, RwLock};
 
-use bevy::prelude::{error, info, warn};
+use bevy::{
+    prelude::{error, info, warn},
+    utils::Uuid,
+};
 use bevy_wasm_shared::version::Version;
 use colored::*;
 use js_sys::{Object, Reflect, Uint8Array, WebAssembly};
@@ -122,7 +125,33 @@ pub fn build_linker(
     link::<dyn FnMut(u64, u64, i32, u32) -> u32>(&host, "get_resource", {
         let mod_state = mod_state.clone();
         let memory = memory.clone();
-        move |uuid_0, uuid_1, buffer_ptr, buffer_len| -> u32 { 0 }
+        move |uuid_0, uuid_1, buffer_ptr, buffer_len| -> u32 {
+            info!(
+                "get_resource {} {} {} {}",
+                uuid_0, uuid_1, buffer_ptr, buffer_len
+            );
+            let uuid = Uuid::from_u64_pair(uuid_0, uuid_1);
+            info!("{:?}", mod_state.read().unwrap().shared_resource_values);
+            let resource_bytes = mod_state
+                .write()
+                .unwrap()
+                .shared_resource_values
+                .remove(&uuid);
+            info!("{uuid} {:?}", resource_bytes);
+            let Some(resource_bytes) = resource_bytes else { return 0 };
+            info!("WE HAVE RESOURCE BYTES {}", resource_bytes.len());
+            if resource_bytes.len() > buffer_len as usize {
+                error!("Serialized event is too long");
+                return 0;
+            }
+            let arr = Uint8Array::from(&resource_bytes[..]);
+            if let Some(memory) = memory.read().unwrap().as_ref() {
+                Uint8Array::new(&memory.buffer()).set(&arr, buffer_ptr as u32);
+                resource_bytes.len() as u32
+            } else {
+                0
+            }
+        }
     });
 
     // __wbindgen_placeholder__

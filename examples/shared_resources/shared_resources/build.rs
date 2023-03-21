@@ -32,7 +32,7 @@ fn build_wasm_pkg(name: &str) {
             .join("scripts_target")
             .join(name)
             .join(format!("wasm32-unknown-unknown/release-wasm/{name}.wasm")),
-        dest_path.join(format!("{name}.wasm")),
+        std::path::Path::new("./assets").join(format!("{name}.wasm")),
     )
     .unwrap();
 }

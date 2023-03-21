@@ -2,11 +2,10 @@ use bevy::{log::LogPlugin, prelude::*};
 use bevy_wasm::prelude::*;
 use shared_resources_protocol::{HostMessage, ModMessage, MyCoolResource, PROTOCOL_VERSION};
 
-pub static MOD_WASM: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/shared_resources_mod.wasm"));
-
 fn main() {
     App::new()
         .add_plugin(LogPlugin::default())
+        .add_plugin(AssetPlugin::default())
         .add_plugins(MinimalPlugins)
         .insert_resource(MyCoolResource {
             value: 0,
@@ -21,8 +20,10 @@ fn main() {
         .run();
 }
 
-fn insert_mods(mut commands: Commands, wasm_engine: Res<WasmEngine>) {
-    commands.spawn(WasmModInternal::new(&wasm_engine, MOD_WASM).unwrap());
+fn insert_mods(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands.spawn(WasmMod {
+        wasm: asset_server.load("shared_resources_mod.wasm"),
+    });
 }
 
 fn update_resource(mut my_cool_resource: ResMut<MyCoolResource>) {

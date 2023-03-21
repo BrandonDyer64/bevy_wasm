@@ -15,9 +15,9 @@ use serde::{de::DeserializeOwned, Serialize};
 use crate::error;
 
 /// A resource that can be shared from the Host
-pub trait SharedResource: Resource + Serialize + DeserializeOwned + TypeUuid {}
+pub trait SharedResource: Resource + Default + Serialize + DeserializeOwned + TypeUuid {}
 
-impl<T: Resource + Serialize + DeserializeOwned + TypeUuid> SharedResource for T {}
+impl<T: Resource + Default + Serialize + DeserializeOwned + TypeUuid> SharedResource for T {}
 
 /// Get the value of a resource from the host
 pub fn get_resource<T: SharedResource>() -> Option<T> {
@@ -74,20 +74,16 @@ trait ResourceFetch: Send + Sync {
     fn fetch(&mut self) -> Option<Box<dyn AnyResource>>;
 }
 
-struct ExternResourceFetchImpl<T: Resource + DeserializeOwned + Send + Sync + TypeUuid>(
-    PhantomData<T>,
-);
+struct ExternResourceFetchImpl<T: SharedResource>(PhantomData<T>);
 
-impl<T: Resource + Serialize + DeserializeOwned + Send + Sync + TypeUuid> ResourceFetch
-    for ExternResourceFetchImpl<T>
-{
+impl<T: SharedResource> ResourceFetch for ExternResourceFetchImpl<T> {
     fn fetch(&mut self) -> Option<Box<dyn AnyResource>> {
         Some(Box::new(get_resource::<T>()?))
     }
 }
 
 struct ExternResourceValue {
-    value: Option<Box<dyn AnyResource>>,
+    value: Box<dyn AnyResource>,
     fetcher: Box<dyn ResourceFetch>,
 }
 
@@ -95,8 +91,8 @@ impl ExternResourceValue {
     pub fn init<T: SharedResource>() -> Self {
         Self {
             value: match get_resource::<T>() {
-                Some(v) => Some(Box::new(v)),
-                None => None,
+                Some(v) => Box::new(v),
+                None => Box::new(T::default()),
             },
             fetcher: Box::new(ExternResourceFetchImpl::<T>(PhantomData)),
         }
@@ -104,14 +100,13 @@ impl ExternResourceValue {
 
     pub fn fetch(&mut self) {
         if let Some(new_value) = self.fetcher.fetch() {
-            self.value = Some(new_value);
+            self.value = new_value;
         }
     }
 
     pub fn downcast_ref<T: Resource + Serialize + DeserializeOwned>(&self) -> Option<&T> {
-        self.value
-            .as_ref()
-            .and_then(|boxed| (&**boxed as &(dyn AnyResource + 'static)).downcast_ref::<T>())
+        let boxed = self.value.as_ref();
+        (&*boxed as &(dyn AnyResource + 'static)).downcast_ref::<T>()
     }
 }
 
@@ -124,8 +119,8 @@ pub struct ExternResources {
 impl Debug for ExternResources {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut debug = f.debug_map();
-        for (type_id, resource_value) in &self.resources {
-            debug.entry(&type_id, &resource_value.value.is_some());
+        for (type_id, _resource_value) in &self.resources {
+            debug.entry(&type_id, &());
         }
         debug.finish()
     }
@@ -191,7 +186,7 @@ impl<'w, 's, T: Resource + Serialize + DeserializeOwned> Deref for ExternRes<'w,
             Some(v) => v,
             None => {
                 error!(
-                    "Resource was not shared with mod: {}",
+                    "FATAL: Resource was not shared with mod: {}",
                     std::any::type_name::<T>()
                 );
                 panic!();

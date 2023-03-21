@@ -36,7 +36,10 @@ impl WasmRuntime {
     }
 
     pub fn create_instance(&self, wasm_bytes: &[u8]) -> Result<WasmInstance> {
-        info!("ATTEMPTING TO CREATE INSTANCE");
+        info!(
+            "ATTEMPTING TO CREATE INSTANCE with {} bytes",
+            wasm_bytes.len()
+        );
         let memory = Arc::new(RwLock::new(None));
         let mod_state = Arc::new(RwLock::new(ModState {
             startup_time: Instant::now(),
@@ -116,9 +119,10 @@ impl WasmInstance {
         let update: Function = Reflect::get(exports.as_ref(), &"update".into())
             .and_then(|x| x.dyn_into())
             .expect("build_app export wasn't a function");
-        update
-            .call1(&JsValue::undefined(), &JsValue::from_f64(app_ptr as f64))
-            .unwrap();
+        match update.call1(&JsValue::undefined(), &JsValue::from_f64(app_ptr as f64)) {
+            Ok(o) => console::log_1(&o),
+            Err(e) => console::error_1(&e),
+        }
 
         let serialized_events_out = std::mem::take(&mut self.mod_state.write().unwrap().events_out);
 
@@ -126,6 +130,7 @@ impl WasmInstance {
     }
 
     pub fn update_resource_value<T: SharedResource>(&mut self, bytes: Arc<[u8]>) {
+        info!("Update shared resource value {}", T::TYPE_UUID);
         self.mod_state
             .write()
             .unwrap()

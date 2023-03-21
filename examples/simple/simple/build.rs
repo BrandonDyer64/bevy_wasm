@@ -19,7 +19,7 @@ fn main() {
     assert!(status.success());
     std::fs::copy(
         dest_path.join("scripts_target/wasm32-unknown-unknown/release-wasm/simple_mod.wasm"),
-        dest_path.join("simple_mod.wasm"),
+        std::path::Path::new("./assets").join("simple_mod.wasm"),
     )
     .unwrap();
 }
