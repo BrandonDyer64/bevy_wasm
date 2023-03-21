@@ -17,9 +17,9 @@ members = [
 resolver = "2"
 
 [profile.release-wasm]
-debug = true
+debug = false
 inherits = "release"
 lto = true
 opt-level = 's'
-panic = "unwind"
-strip = false
+panic = "abort"
+strip = true

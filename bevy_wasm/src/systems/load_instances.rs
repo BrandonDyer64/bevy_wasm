@@ -14,7 +14,6 @@ pub fn load_instances(
 ) {
     for (entity, mod_to_load) in mods_to_load.iter() {
         if let Some(wasm_asset) = wasm_assets.get(&mod_to_load.wasm) {
-            info!("WE HAVE WASM");
             let instance = wasm_runtime.create_instance(&wasm_asset.bytes);
             match instance {
                 Ok(instance) => {

@@ -73,7 +73,7 @@ fn main() {
         .run();
 }
 
-fn add_mods(mut commands: Commands, wasm_engine: Res<WasmEngine>) {
+fn add_mods(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(WasmMod {
         wasm: asset_server.load("some_mod.wasm"),
     });
@@ -202,7 +202,6 @@ See [examples/shared_resources](https://github.com/BrandonDyer64/bevy_wasm/tree/
 | ✅  | Mod discrimination (events aren't broadcast all) |
 | ✅  | Browser support                                  |
 | ⬜  | Extern Query                                     |
-| ⬜  | Custom FFI                                       |
 | ⬜  | Synced time                                      |
 | ⬜  | Mod hotloading                                   |
 | ⬜  | Automatic component syncing                      |

@@ -5,7 +5,7 @@ use std::{
 
 use anyhow::Result;
 use bevy::{
-    prelude::{info, Component, Resource},
+    prelude::{Component, Resource},
     utils::{HashMap, Instant},
 };
 use js_sys::{
@@ -34,10 +34,6 @@ impl WasmRuntime {
     }
 
     pub fn create_instance(&self, wasm_bytes: &[u8]) -> Result<WasmInstance> {
-        info!(
-            "ATTEMPTING TO CREATE INSTANCE with {} bytes",
-            wasm_bytes.len()
-        );
         let memory = Arc::new(RwLock::new(None));
         let mod_state = Arc::new(RwLock::new(ModState {
             startup_time: Instant::now(),
@@ -47,14 +43,11 @@ impl WasmRuntime {
             shared_resource_values: HashMap::new(),
         }));
         let imports = build_linker(self.protocol_version, mod_state.clone(), memory.clone());
-        console::log_1(&imports);
         let promise = WebAssembly::instantiate_buffer(wasm_bytes, &imports);
         let instance = Arc::new(RwLock::new(None));
         let then = Closure::new({
             let instance = instance.clone();
             move |value| {
-                info!("CLOSURE RESOLVED");
-                console::log_1(&value);
                 let instance_value: WebAssembly::Instance =
                     Reflect::get(&value, &"instance".into())
                         .and_then(|x| x.dyn_into())
@@ -63,11 +56,9 @@ impl WasmRuntime {
                 let memory_value: WebAssembly::Memory = Reflect::get(&exports, &"memory".into())
                     .and_then(|x| x.dyn_into())
                     .unwrap();
-                info!("Memory has {} pages", memory_value.grow(0));
                 let build_app: Function = Reflect::get(exports.as_ref(), &"build_app".into())
                     .and_then(|x| x.dyn_into())
                     .expect("build_app export wasn't a function");
-                console::log_2(&instance_value, &memory_value);
                 *instance.write().unwrap() = Some(instance_value);
                 *memory.write().unwrap() = Some(memory_value);
                 build_app.call0(&JsValue::undefined()).unwrap();
