@@ -10,10 +10,10 @@ use bevy::{
     utils::{HashMap, Instant},
 };
 use js_sys::{
-    Object, Reflect,
+    Function, Object, Reflect,
     WebAssembly::{self, Instance},
 };
-use wasm_bindgen::{prelude::Closure, JsValue};
+use wasm_bindgen::{prelude::Closure, JsCast, JsValue};
 use wasm_bindgen_futures::JsFuture;
 
 use bevy_wasm_shared::version::Version;
@@ -54,6 +54,22 @@ impl WasmRuntime {
             move |value| {
                 info!("CLOSURE RESOLVED");
                 console::log_1(&value);
+                let instance_value: WebAssembly::Instance =
+                    Reflect::get(&value, &"instance".into())
+                        .and_then(|x| x.dyn_into())
+                        .unwrap();
+                let exports = instance_value.exports();
+                let memory_value: WebAssembly::Memory = Reflect::get(&exports, &"memory".into())
+                    .and_then(|x| x.dyn_into())
+                    .unwrap();
+                info!("Memory has {} pages", memory_value.grow(0));
+                let build_app: Function = Reflect::get(exports.as_ref(), &"build_app".into())
+                    .and_then(|x| x.dyn_into())
+                    .expect("build_app export wasn't a function");
+                build_app.call0(&JsValue::undefined()).unwrap();
+                console::log_2(&instance_value, &memory_value);
+                *instance.write().unwrap() = Some(instance_value);
+                *memory.write().unwrap() = Some(memory_value);
             }
         });
         let catch = Closure::new({
