@@ -57,8 +57,8 @@ fn update_cubes_from_mods(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    mut mod_messages: EventReader<ModMessage>, // GET messages FROM mods
-    mut host_messages: EventWriter<HostMessage>, // SEND messages TO mods
+    mut mod_messages: EventReader<ModMessage>,
+    mut host_messages: EventWriter<HostMessage>,
     mut query: Query<&mut Transform>,
 ) {
     for event in mod_messages.iter() {
