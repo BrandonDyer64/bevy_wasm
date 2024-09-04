@@ -57,11 +57,11 @@ fn update_cubes_from_mods(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    mut events_out: EventReader<ModMessage>, // GET messages FROM mods
-    mut events_in: EventWriter<HostMessage>, // SEND messages TO mods
+    mut mod_messages: EventReader<ModMessage>,
+    mut host_messages: EventWriter<HostMessage>,
     mut query: Query<&mut Transform>,
 ) {
-    for event in events_out.iter() {
+    for event in mod_messages.iter() {
         match event {
             ModMessage::MoveCube { entity_id, x, y, z } => {
                 if let Ok(mut transform) = query.get_mut(Entity::from_raw(*entity_id)) {
@@ -79,7 +79,7 @@ fn update_cubes_from_mods(
                     })
                     .id()
                     .index();
-                events_in.send(HostMessage::SpawnedCube {
+                host_messages.send(HostMessage::SpawnedCube {
                     mod_state: *mod_state,
                     entity_id,
                 });
