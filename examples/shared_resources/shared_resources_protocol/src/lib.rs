@@ -1,7 +1,7 @@
-use bevy_ecs::prelude::*;
-use bevy_reflect::TypeUuid;
+use bevy::ecs::prelude::*;
 use bevy_wasm_shared::prelude::*;
 use serde::{Deserialize, Serialize};
+use type_uuid::TypeUuid;
 
 /// The version of the protocol. Automatically set from the `CARGO_PKG_XXX` environment variables.
 pub const PROTOCOL_VERSION: Version = version!();
@@ -16,13 +16,13 @@ pub struct MyCoolResource {
 }
 
 /// Messages passed `Host -> Mod`
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Event, Debug, Clone, Serialize, Deserialize)]
 pub enum HostMessage {
     // We don't care about this right now
 }
 
 /// Messages passed `Mod -> Host`
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Event, Debug, Clone, Serialize, Deserialize)]
 pub enum ModMessage {
     // We don't care about this right now
 }

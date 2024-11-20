@@ -13,8 +13,51 @@ members = [
   "examples/shared_resources/shared_resources",
   "examples/shared_resources/shared_resources_mod",
   "examples/shared_resources/shared_resources_protocol",
+  "bevy_wasm_sys_core",
 ]
 resolver = "2"
+
+[workspace.dependencies]
+# Project dependencies
+bevy_wasm = { path = "bevy_wasm" }
+bevy_wasm_shared = { path = "bevy_wasm_shared" }
+bevy_wasm_sys_core = { path = "bevy_wasm_sys_core" }
+bevy_wasm_sys = { path = "bevy_wasm_sys" }
+cubes_protocol = { path = "examples/cubes/cubes_protocol" }
+simple_protocol = { path = "examples/simple/simple_protocol" }
+shared_resources_protocol = { path = "examples/shared_resources/shared_resources_protocol" }
+
+# External dependencies
+anyhow = "1.0"
+bevy = { version = "0.14.2", default-features = false, features = [
+	"bevy_asset",
+	"bevy_core_pipeline",
+	"bevy_gilrs",
+	"bevy_gizmos",
+	"bevy_gltf",
+	"bevy_pbr",
+	"bevy_render",
+	"bevy_scene",
+	"bevy_text",
+	"bevy_ui",
+	"default_font",
+	"png",
+	"tonemapping_luts",
+	"webgl2",
+] }
+bincode = "1.3"
+colored = "2.1"
+js-sys = "0.3.0"
+parking_lot = "0.12.2"
+serde = { version = "1.0", features = ["derive"] }
+thiserror = "1.0.59"
+tracing = "0.1"
+wasi-common = "25.0.1"
+wasm-bindgen = "0.2"
+wasmtime = "25.0.1"
+web-sys = { version = "0.3.72", features = ["console", "WorkerGlobalScope"] }
+type-uuid = "0.1.2"
+uuid = "1.11.0"
 
 [profile.release-wasm]
 debug = false

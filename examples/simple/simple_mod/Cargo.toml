@@ -10,7 +10,7 @@ version = "0.1.0"
 crate-type = ["cdylib"]
 
 [dependencies]
-bevy_ecs = "0.10"
-bevy_wasm_sys = {path = "../../../bevy_wasm_sys"}
-serde = "1.0"
-simple_protocol = {path = "../simple_protocol"}
+bevy.workspace = true
+bevy_wasm_sys.workspace = true
+serde.workspace = true
+simple_protocol.workspace = true

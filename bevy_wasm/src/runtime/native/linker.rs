@@ -1,20 +1,25 @@
 use std::time::Instant;
 
 use anyhow::Result;
-use bevy::{prelude::*, utils::Uuid};
+use bevy::prelude::*;
 use bevy_wasm_shared::prelude::*;
 use colored::*;
+use uuid::Uuid;
 use wasmtime::*;
 
-use crate::mod_state::ModState;
+use super::WasiModState;
 
-pub(crate) fn build_linker(engine: &Engine, protocol_version: Version) -> Result<Linker<ModState>> {
-    let mut linker: Linker<ModState> = Linker::new(engine);
+pub(crate) fn build_linker(
+    engine: &Engine,
+    protocol_version: Version,
+) -> Result<Linker<WasiModState>> {
+    let mut linker: Linker<WasiModState> = Linker::new(engine);
+    wasi_common::sync::add_to_linker(&mut linker, |s| &mut s.wasi_ctx)?;
 
     linker.func_wrap(
         "host",
         "console_info",
-        |mut caller: Caller<'_, ModState>, msg: i32, len: u32| {
+        |mut caller: Caller<WasiModState>, msg: i32, len: u32| {
             let mem = match caller.get_export("memory") {
                 Some(Extern::Memory(mem)) => mem,
                 _ => panic!("failed to find mod memory"),
@@ -36,7 +41,7 @@ pub(crate) fn build_linker(engine: &Engine, protocol_version: Version) -> Result
     linker.func_wrap(
         "host",
         "console_warn",
-        |mut caller: Caller<'_, ModState>, msg: i32, len: u32| {
+        |mut caller: Caller<WasiModState>, msg: i32, len: u32| {
             let mem = match caller.get_export("memory") {
                 Some(Extern::Memory(mem)) => mem,
                 _ => panic!("failed to find mod memory"),
@@ -58,7 +63,7 @@ pub(crate) fn build_linker(engine: &Engine, protocol_version: Version) -> Result
     linker.func_wrap(
         "host",
         "console_error",
-        |mut caller: Caller<'_, ModState>, msg: i32, len: u32| {
+        |mut caller: Caller<WasiModState>, msg: i32, len: u32| {
             let mem = match caller.get_export("memory") {
                 Some(Extern::Memory(mem)) => mem,
                 _ => panic!("failed to find mod memory"),
@@ -80,15 +85,15 @@ pub(crate) fn build_linker(engine: &Engine, protocol_version: Version) -> Result
     linker.func_wrap(
         "host",
         "store_app",
-        |mut caller: Caller<'_, ModState>, app_ptr: i32| {
-            caller.data_mut().app_ptr = app_ptr;
+        |mut caller: Caller<WasiModState>, app_ptr: i32| {
+            caller.data_mut().mod_state.app_ptr = app_ptr;
             info!("{} 0x{:X}", "Storing app pointer:".italic(), app_ptr);
         },
     )?;
     linker.func_wrap(
         "host",
         "send_serialized_event",
-        |mut caller: Caller<'_, ModState>, msg: i32, len: u32| {
+        |mut caller: Caller<WasiModState>, msg: i32, len: u32| {
             let mem = match caller.get_export("memory") {
                 Some(Extern::Memory(mem)) => mem,
                 _ => panic!("failed to find mod memory"),
@@ -103,19 +108,19 @@ pub(crate) fn build_linker(engine: &Engine, protocol_version: Version) -> Result
                     return;
                 };
 
-            caller.data_mut().events_out.push(data);
+            caller.data_mut().mod_state.events_out.push(data);
         },
     )?;
     linker.func_wrap(
         "host",
         "get_next_event",
-        |mut caller: Caller<'_, ModState>, arena: i32, len: u32| -> u32 {
+        |mut caller: Caller<WasiModState>, arena: i32, len: u32| -> u32 {
             let mem = match caller.get_export("memory") {
                 Some(Extern::Memory(mem)) => mem,
                 _ => panic!("failed to find mod memory"),
             };
 
-            let Some(serialized_event) = caller.data_mut().events_in.pop_front() else { return 0 };
+            let Some(serialized_event) = caller.data_mut().mod_state.events_in.pop_front() else { return 0; };
 
             let Some(buffer) = mem
                 .data_mut(&mut caller)
@@ -132,7 +137,7 @@ pub(crate) fn build_linker(engine: &Engine, protocol_version: Version) -> Result
     linker.func_wrap(
         "host",
         "get_resource",
-        |mut caller: Caller<'_, ModState>,
+        |mut caller: Caller<WasiModState>,
          uuid_0: u64,
          uuid_1: u64,
          buffer: i32,
@@ -144,7 +149,7 @@ pub(crate) fn build_linker(engine: &Engine, protocol_version: Version) -> Result
             };
 
             let uuid = Uuid::from_u64_pair(uuid_0, uuid_1);
-            let resource_bytes = caller.data_mut().shared_resource_values.remove(&uuid);
+            let resource_bytes = caller.data_mut().mod_state.shared_resource_values.remove(&uuid);
 
             let resource_bytes = match resource_bytes {
                 Some(resource_bytes) => resource_bytes,
@@ -166,8 +171,8 @@ pub(crate) fn build_linker(engine: &Engine, protocol_version: Version) -> Result
     linker.func_wrap(
         "host",
         "get_time_since_startup",
-        |caller: Caller<'_, ModState>| -> u64 {
-            let startup_time = caller.data().startup_time;
+        |caller: Caller<WasiModState>| -> u64 {
+            let startup_time = caller.data().mod_state.startup_time;
             let delta = Instant::now() - startup_time;
             delta.as_nanos() as u64
         },
@@ -187,7 +192,7 @@ pub(crate) fn build_linker(engine: &Engine, protocol_version: Version) -> Result
     linker.func_wrap(
         "__wbindgen_placeholder__",
         "__wbindgen_throw",
-        |mut caller: Caller<'_, ModState>, msg: i32, len: i32| {
+        |mut caller: Caller<WasiModState>, msg: i32, len: i32| {
             let mem = match caller.get_export("memory") {
                 Some(Extern::Memory(mem)) => mem,
                 _ => panic!("failed to find mod memory"),

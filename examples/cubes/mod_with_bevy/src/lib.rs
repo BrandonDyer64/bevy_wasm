@@ -8,10 +8,9 @@ const MOD_STATE: u64 = 0xa6e79eb9; // Should be unique to each mod
 pub unsafe extern "C" fn build_app() {
     info!("Hello from build_app inside mod_with_bevy!");
     App::new()
-        .add_plugin(FFIPlugin::<HostMessage, ModMessage>::new(PROTOCOL_VERSION))
-        .add_startup_system(startup_system)
-        .add_system(update_cube)
-        .add_system(listen_for_message)
+        .add_plugins(FFIPlugin::<HostMessage, ModMessage>::new(PROTOCOL_VERSION))
+        .add_systems(Startup, startup_system)
+        .add_systems(Update, (update_cube, listen_for_message))
         .run();
 }
 
@@ -47,7 +46,7 @@ fn update_cube(
     let time: f32 = time.elapsed_seconds();
     // Move the cube in a circle
     resource.y = time.sin() + 1.5;
-    resource.x = -time.cos();
+    resource.z = time.cos();
 
     // Ensure the cube has been spawned on the host
     let entity_id = match resource.entity_id {
@@ -65,7 +64,7 @@ fn update_cube(
 }
 
 fn listen_for_message(mut events: EventReader<HostMessage>, mut resource: ResMut<CubePosition>) {
-    for event in events.iter() {
+    for event in events.read() {
         if let HostMessage::SpawnedCube {
             entity_id,
             mod_state: MOD_STATE, // Must be for us

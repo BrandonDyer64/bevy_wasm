@@ -6,9 +6,9 @@ use shared_resources_protocol::{HostMessage, ModMessage, MyCoolResource, PROTOCO
 pub unsafe extern "C" fn build_app() {
     info!("Hello from build_app inside mod_with_bevy!");
     App::new()
-        .add_plugin(FFIPlugin::<HostMessage, ModMessage>::new(PROTOCOL_VERSION))
-        .add_startup_system(startup_system)
-        .add_system(print_resource_value)
+        .add_plugins(FFIPlugin::<HostMessage, ModMessage>::new(PROTOCOL_VERSION))
+        .add_systems(Startup, startup_system)
+        .add_systems(Update, print_resource_value)
         .run();
 }
 

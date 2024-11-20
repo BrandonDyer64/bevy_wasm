@@ -1,12 +1,15 @@
 [package]
 categories = ["wasm", "game-development"]
-description = "Run WASM systems in Bevy"
+description = "Import into your wasm scripts. Use with the bevy_wasm crate."
 edition = "2021"
 keywords = ["bevy", "wasm", "webassembly", "game", "gamedev"]
 license = "MIT OR Apache-2.0"
-name = "bevy_wasm_shared"
+name = "bevy_wasm_sys_core"
 readme = "../README.md"
 repository = "https://github.com/BrandonDyer64/bevy_wasm"
 version = "0.14.2"
 
 [dependencies]
+bevy_wasm_shared.workspace = true
+bincode.workspace = true
+serde.workspace = true

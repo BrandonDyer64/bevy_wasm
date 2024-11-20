@@ -1,0 +1,126 @@
+[config]
+default_to_workspace = false
+
+# In native mode we need to build in wasm32-wasip1
+# Because of getrandom crate which has different implementations
+# Between wasi which has no browser and wasm
+# https://docs.rs/getrandom/latest/getrandom/
+
+[tasks.simple-mod-wasi]
+command = "cargo"
+args = [
+	"build",
+	"--profile",
+	"release-wasm",
+	"--package",
+	"simple_mod",
+	"--target",
+	"wasm32-wasip1",
+]
+
+[tasks.simple-mod-wasi-copy]
+linux_alias = "linux-simple-mod-wasi-copy"
+windows_alias = "windows-simple-mod-wasi-copy"
+
+[tasks.linux-simple-mod-wasi-copy]
+script_runner = "@shell"
+script = '''
+cp "target/wasm32-wasip1/release-wasm/deps/simple_mod.wasm", "examples/simple/simple/assets/simple_mod.wasm"
+'''
+
+[tasks.windows-simple-mod-wasi-copy]
+script = '''
+copy "target\wasm32-wasip1\release-wasm\deps\simple_mod.wasm", "examples\simple\simple\assets\simple_mod.wasm"
+'''
+
+[tasks.build-simple]
+command = "cargo"
+args = ["build", "--bin", "simple"]
+dependencies = ["simple-mod-wasi", "simple-mod-wasi-copy"]
+
+[tasks.run-simple]
+command = "cargo"
+args = ["run", "--bin", "simple"]
+dependencies = ["simple-mod-wasi", "simple-mod-wasi-copy"]
+
+[tasks.cubes-mod-with-bevy-wasi]
+command = "cargo"
+args = [
+	"build",
+	"--profile",
+	"release-wasm",
+	"--package",
+	"mod_with_bevy",
+	"--target",
+	"wasm32-wasip1",
+]
+
+[tasks.cubes-mod-without-bevy-wasi]
+command = "cargo"
+args = [
+	"build",
+	"--profile",
+	"release-wasm",
+	"--package",
+	"mod_without_bevy",
+	"--target",
+	"wasm32-wasip1",
+]
+
+[tasks.cubes-mod-wasi-copy]
+linux_alias = "linux-cubes-mod-wasi-copy"
+windows_alias = "windows-cubes-mod-wasi-copy"
+
+[tasks.linux-cubes-mod-wasi-copy]
+script_runner = "@shell"
+script = '''
+cp "target/wasm32-wasip1/release-wasm/deps/mod_with_bevy.wasm", "examples/cubes/cubes/assets/mod_with_bevy.wasm"
+cp "target/wasm32-wasip1/release-wasm/deps/mod_without_bevy.wasm", "examples/cubes/cubes/assets/mod_without_bevy.wasm"
+'''
+
+[tasks.windows-cubes-mod-wasi-copy]
+script = '''
+copy "target\wasm32-wasip1\release-wasm\deps\mod_with_bevy.wasm", "examples\cubes\cubes\assets\mod_with_bevy.wasm"
+copy "target\wasm32-wasip1\release-wasm\deps\mod_without_bevy.wasm", "examples\cubes\cubes\assets\mod_without_bevy.wasm"
+'''
+
+[tasks.run-cubes]
+command = "cargo"
+args = ["run", "--bin", "cubes"]
+dependencies = [
+	"cubes-mod-with-bevy-wasi",
+	"cubes-mod-without-bevy-wasi",
+	"cubes-mod-wasi-copy",
+]
+
+[tasks.shared-resources-mod-wasi]
+command = "cargo"
+args = [
+	"build",
+	"--profile",
+	"release-wasm",
+	"--package",
+	"shared_resources_mod",
+	"--target",
+	"wasm32-wasip1",
+]
+
+[tasks.shared-resources-mod-wasi-copy]
+linux_alias = "linux-shared-resources-mod-wasi-copy"
+windows_alias = "windows-shared-resources-mod-wasi-copy"
+
+[tasks.linux-shared-resources-mod-wasi-copy]
+script_runner = "@shell"
+script = '''
+cp "target/wasm32-wasip1/release-wasm/deps/shared_resources_mod.wasm", "examples/shared_resources/shared_resources/assets/shared_resources_mod.wasm"
+'''
+
+[tasks.windows-shared-resources-mod-wasi-copy]
+script = '''
+copy "target\wasm32-wasip1\release-wasm\deps\shared_resources_mod.wasm", "examples\shared_resources\shared_resources\assets\shared_resources_mod.wasm"
+'''
+
+[tasks.run-shared-resources]
+command = "cargo"
+args = ["run", "--bin", "shared_resources"]
+dependencies = ["shared-resources-mod-wasi", "shared-resources-mod-wasi-copy"]

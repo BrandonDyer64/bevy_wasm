@@ -17,6 +17,23 @@ See [examples/cubes](https://github.com/BrandonDyer64/bevy_wasm/tree/main/exampl
 
 [Changelog](https://github.com/BrandonDyer64/bevy_wasm/blob/main/CHANGELOG.md)
 
+## Examples
+
+To start the examples, you will need those dependencies
+
+```shell
+rustup target add wasm32-unknown-unknown
+rustup target add wasm32-wasip1
+cargo install cargo-make
+```
+
+Native executable calling a wasm32-wasip1 plugin
+```shell
+cargo make run-simple
+cargo make run-cubes
+cargo make run-shared-resources
+```
+
 ## Protocol
 
 Our protocol crate defines the two message types for communicating between the game and mods.

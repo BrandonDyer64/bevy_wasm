@@ -16,7 +16,7 @@ Folders here:
 
 ## Running Example
 
-To run this example, use `cargo run -p cubes`.
+To run this example, use `cargo make run-cubes` from the project root.
 
 You should see two cubes.
 One green, moving up and down, is from our mod that is using Bevy.

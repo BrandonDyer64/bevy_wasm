@@ -1,5 +1,4 @@
 [package]
-build = "build.rs"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 name = "simple"
@@ -7,6 +6,6 @@ publish = false
 version = "0.1.0"
 
 [dependencies]
-bevy = "0.10"
-bevy_wasm = {path = "../../../bevy_wasm"}
-simple_protocol = {path = "../simple_protocol"}
+bevy = { workspace = true, features = ["bevy_winit"] }
+bevy_wasm.workspace = true
+simple_protocol.workspace = true

@@ -15,6 +15,7 @@ use js_sys::{
 use wasm_bindgen::{prelude::Closure, JsCast, JsValue};
 
 use bevy_wasm_shared::version::Version;
+use uuid::Uuid;
 use web_sys::console;
 
 use crate::{mod_state::ModState, SharedResource};
@@ -123,6 +124,6 @@ impl WasmInstance {
             .write()
             .unwrap()
             .shared_resource_values
-            .insert(T::TYPE_UUID, bytes);
+            .insert(Uuid::from_bytes(T::UUID), bytes);
     }
 }

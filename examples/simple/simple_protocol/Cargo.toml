@@ -6,5 +6,6 @@ publish = false
 version = "0.1.0"
 
 [dependencies]
-bevy_wasm_shared = {path = "../../../bevy_wasm_shared"}
-serde = "1.0"
+bevy_wasm_shared.workspace = true
+bevy.workspace = true
+serde.workspace = true

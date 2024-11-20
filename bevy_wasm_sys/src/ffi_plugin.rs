@@ -2,27 +2,27 @@
 
 use std::ffi::c_void;
 
-use bevy_app::{App, Plugin};
-use bevy_ecs::{
+use bevy::app::{App, AppExit, Plugin, Update};
+use bevy::ecs::{
+    event::Event,
     prelude::{EventReader, EventWriter},
     system::ResMut,
 };
 use bevy_wasm_shared::prelude::*;
 use serde::{de::DeserializeOwned, Serialize};
+use bevy_wasm_sys_core::events::{get_next_event, send_event};
+use bevy_wasm_sys_core::{error, info};
 
 use crate::{
     ecs::extern_res::ExternResources,
-    error,
-    events::{get_next_event, send_event},
     ffi::store_app,
-    info,
     time::Time,
 };
 
 /// An object that can be used as a message
-pub trait Message: Send + Sync + Serialize + DeserializeOwned + 'static {}
+pub trait Message: Send + Sync + Serialize + DeserializeOwned + Event + 'static {}
 
-impl<T> Message for T where T: Send + Sync + Serialize + DeserializeOwned + 'static {}
+impl<T> Message for T where T: Send + Sync + Serialize + DeserializeOwned + Event + 'static {}
 
 /// Use this plugin in your app to enable communication with the host
 ///
@@ -94,10 +94,10 @@ impl<In: Message, Out: Message> Plugin for FFIPlugin<In, Out> {
             .add_event::<Out>()
             .insert_resource(Time::new())
             .insert_resource(ExternResources::new())
-            .add_system(update_time)
-            .add_system(fetch_resources)
-            .add_system(event_listener::<In>)
-            .add_system(event_sender::<Out>);
+            .add_systems(Update, update_time)
+            .add_systems(Update, fetch_resources)
+            .add_systems(Update, event_listener::<In>)
+            .add_systems(Update, event_sender::<Out>);
         // .add_system_to_stage(CoreStage::First, update_time.at_start())
         // .add_system_to_stage(CoreStage::PreUpdate, fetch_resources)
         // .add_system_to_stage(CoreStage::PreUpdate, event_listener::<In>)
@@ -116,16 +116,17 @@ fn event_listener<M: Message>(mut events: EventWriter<M>) {
 }
 
 fn event_sender<M: Message>(mut events: EventReader<M>) {
-    for event in events.iter() {
+    for event in events.read() {
         send_event(event);
     }
 }
 
-fn app_runner(app: App) {
+fn app_runner(app: App) -> AppExit {
     let app = Box::new(app);
     let app_ptr = Box::into_raw(app);
     let app_ptr = app_ptr as *const c_void;
     unsafe { store_app(app_ptr) };
+    AppExit::Success
 }
 
 fn update_time(mut time: ResMut<Time>) {

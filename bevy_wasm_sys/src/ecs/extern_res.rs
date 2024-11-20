@@ -8,11 +8,11 @@ use std::{
     ops::Deref,
 };
 
-use bevy_ecs::{prelude::*, system::SystemParam};
-use bevy_reflect::TypeUuid;
+use bevy::ecs::{prelude::*, system::SystemParam};
 use serde::{de::DeserializeOwned, Serialize};
-
-use crate::error;
+use bevy_wasm_sys_core::error;
+use type_uuid::TypeUuid;
+use uuid::Uuid;
 
 /// A resource that can be shared from the Host
 pub trait SharedResource: Resource + Default + Serialize + DeserializeOwned + TypeUuid {}
@@ -21,7 +21,7 @@ impl<T: Resource + Default + Serialize + DeserializeOwned + TypeUuid> SharedReso
 
 /// Get the value of a resource from the host
 pub fn get_resource<T: SharedResource>() -> Option<T> {
-    let (uuid_0, uuid_1) = T::TYPE_UUID.as_u64_pair();
+    let (uuid_0, uuid_1) = Uuid::from_bytes(T::UUID).as_u64_pair();
 
     let mut buffer = [0; 1024];
 

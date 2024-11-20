@@ -1,6 +1,7 @@
 use std::{collections::VecDeque, sync::Arc};
 
-use bevy::utils::{HashMap, Instant, Uuid};
+use bevy::utils::{HashMap, Instant};
+use uuid::Uuid;
 
 /// Internal mod state
 pub struct ModState {

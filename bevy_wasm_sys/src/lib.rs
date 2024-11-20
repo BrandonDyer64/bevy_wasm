@@ -8,29 +8,22 @@ To make a game that can use WebAssembly mods, see the sister crate [bevy_wasm](h
 
 #![deny(missing_docs)]
 
-pub mod events;
-pub mod ffi;
-pub mod macros;
-
-#[cfg(feature = "bevy")]
 pub mod ecs;
-
-#[cfg(feature = "bevy")]
+pub mod ffi;
 pub mod ffi_plugin;
-
-#[cfg(feature = "bevy")]
 pub mod time;
 
 /// Convenience re-exports
 pub mod prelude {
-    pub use crate::macros::*;
-    pub use crate::{error, info, warn};
+    pub use bevy::app::prelude::*;
+    pub use bevy::ecs::prelude::*;
+    pub use bevy::math::prelude::*;
+    pub use bevy::reflect::prelude::*;
+    pub use bevy::transform::prelude::*;
     pub use bevy_wasm_shared::prelude::*;
+    pub use bevy_wasm_sys_core::{error, info, warn};
 
-    #[cfg(feature = "bevy")]
-    pub use {
-        crate::ecs::prelude::*, crate::ffi_plugin::FFIPlugin, crate::time::Time,
-        bevy_app::prelude::*, bevy_derive::*, bevy_ecs::prelude::*, bevy_math::prelude::*,
-        bevy_reflect::prelude::*, bevy_transform::prelude::*,
-    };
+    pub use crate::ecs::prelude::*;
+    pub use crate::ffi_plugin::FFIPlugin;
+    pub use crate::time::Time;
 }

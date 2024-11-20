@@ -4,19 +4,19 @@ use shared_resources_protocol::{HostMessage, ModMessage, MyCoolResource, PROTOCO
 
 fn main() {
     App::new()
-        .add_plugin(LogPlugin::default())
-        .add_plugin(AssetPlugin::default())
+        .add_plugins(AssetPlugin::default())
+        .add_plugins(LogPlugin::default())
         .add_plugins(MinimalPlugins)
         .insert_resource(MyCoolResource {
             value: 0,
             string: "Hello from MyCoolResource!".to_string(),
         })
-        .add_plugin(
+        .add_plugins(
             WasmPlugin::<HostMessage, ModMessage>::new(PROTOCOL_VERSION)
                 .share_resource::<MyCoolResource>(),
         )
-        .add_startup_system(insert_mods)
-        .add_system(update_resource)
+        .add_systems(Startup, insert_mods)
+        .add_systems(Update, update_resource)
         .run();
 }
 

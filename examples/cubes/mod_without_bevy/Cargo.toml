@@ -10,8 +10,6 @@ version = "0.1.0"
 crate-type = ["cdylib"]
 
 [dependencies]
-cubes_protocol = {path = "../cubes_protocol"}
+cubes_protocol = { path = "../cubes_protocol" }
 
-[dependencies.bevy_wasm_sys]
-default-features = false # <- because we don't want any Bevy stuff
-path = "../../../bevy_wasm_sys"
+bevy_wasm_sys_core.workspace = true

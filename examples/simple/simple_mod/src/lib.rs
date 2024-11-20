@@ -5,14 +5,14 @@ use simple_protocol::{GameMessage, ModMessage, PROTOCOL_VERSION};
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn build_app() {
     App::new()
-        .add_plugin(FFIPlugin::<GameMessage, ModMessage>::new(PROTOCOL_VERSION))
-        .add_system(listen_for_game_messages)
-        .add_system(send_messages_to_game)
+        .add_plugins(FFIPlugin::<GameMessage, ModMessage>::new(PROTOCOL_VERSION))
+        .add_systems(Update, listen_for_game_messages)
+        .add_systems(Update, send_messages_to_game)
         .run();
 }
 
 fn listen_for_game_messages(mut events: EventReader<GameMessage>) {
-    for event in events.iter() {
+    for event in events.read() {
         match event {
             GameMessage::HiThere => {
                 info!("The game said hi there!");

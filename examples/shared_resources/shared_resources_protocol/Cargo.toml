@@ -6,8 +6,7 @@ publish = false
 version = "0.1.0"
 
 [dependencies]
-bevy_derive = "0.10"
-bevy_ecs = "0.10"
-bevy_reflect = "0.10"
-bevy_wasm_shared = {path = "../../../bevy_wasm_shared"}
-serde = {version = "1.0", features = ["derive"]}
+bevy.workspace = true
+type-uuid.workspace = true
+bevy_wasm_shared = { path = "../../../bevy_wasm_shared" }
+serde = { version = "1.0", features = ["derive"] }

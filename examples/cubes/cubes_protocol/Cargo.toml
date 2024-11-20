@@ -6,5 +6,6 @@ publish = false
 version = "123.456.789"
 
 [dependencies]
-bevy_wasm_shared = {path = "../../../bevy_wasm_shared"}
-serde = {version = "1.0", features = ["derive"]}
+bevy.workspace = true
+bevy_wasm_shared.workspace = true
+serde = { version = "1.0", features = ["derive"] }

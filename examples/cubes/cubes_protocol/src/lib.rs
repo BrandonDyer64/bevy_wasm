@@ -1,3 +1,4 @@
+use bevy::ecs::event::Event;
 use bevy_wasm_shared::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -5,7 +6,7 @@ use serde::{Deserialize, Serialize};
 pub const PROTOCOL_VERSION: Version = version!();
 
 /// Messages passed `Host -> Mod`
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Event, Debug, Clone, Serialize, Deserialize)]
 pub enum HostMessage {
     /// A cube was spawned. This is its entity id.
     SpawnedCube {
@@ -16,7 +17,7 @@ pub enum HostMessage {
 }
 
 /// Messages passed `Mod -> Host`
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Event, Debug, Clone, Serialize, Deserialize)]
 pub enum ModMessage {
     /// Spawn a cube
     SpawnCube {

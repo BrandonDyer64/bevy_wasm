@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.14.2
+
+-   Upgraded to Bevy v0.14.2
+-   Switched to Cargo make instead of build.rs for building examples
+-   Switched to wasm32-wasip1 for native plugin compilation
+-   Switched to workspace dependencies
+
 ## 0.10.1
 
 -   Browser support

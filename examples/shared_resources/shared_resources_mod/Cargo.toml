@@ -10,6 +10,6 @@ version = "0.1.0"
 crate-type = ["cdylib"]
 
 [dependencies]
-bevy_ecs = "0.10"
-bevy_wasm_sys = {path = "../../../bevy_wasm_sys"}
-shared_resources_protocol = {path = "../shared_resources_protocol"}
+bevy.workspace = true
+bevy_wasm_sys = { path = "../../../bevy_wasm_sys" }
+shared_resources_protocol = { path = "../shared_resources_protocol" }

@@ -21,7 +21,7 @@ struct ResourceUpdater<R: SharedResource> {
 
 impl<R: SharedResource> AddSystemToApp for ResourceUpdater<R> {
     fn add_system_to_app(&self, app: &mut App) {
-        app.add_system(systems::update_shared_resource::<R>);
+        app.add_systems(Update, systems::update_shared_resource::<R>);
     }
 }
 
@@ -79,12 +79,12 @@ impl<In: Message, Out: Message> Plugin for WasmPlugin<In, Out> {
         let wasm_resource = WasmRuntime::new(self.protocol_version);
 
         app.insert_resource(wasm_resource)
-            .add_asset::<WasmAsset>()
+            .init_asset::<WasmAsset>()
             .init_asset_loader::<WasmAssetLoader>()
             .add_event::<In>()
             .add_event::<Out>()
-            .add_system(load_instances)
-            .add_system(systems::tick_mods::<In, Out>);
+            .add_systems(Update, load_instances)
+            .add_systems(Update, systems::tick_mods::<In, Out>);
 
         for system in self.shared_resources.iter() {
             system.add_system_to_app(app);

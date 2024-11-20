@@ -7,8 +7,9 @@
 
 #![deny(missing_docs)]
 
-use bevy::{prelude::Resource, reflect::TypeUuid};
+use bevy::prelude::{Event, Resource};
 use serde::{de::DeserializeOwned, Serialize};
+use type_uuid::TypeUuid;
 
 pub mod components;
 mod mod_state;
@@ -22,9 +23,9 @@ mod wasm_asset;
 /// Must be [`Clone`], [`Send`], and [`Sync`], and must be (de)serializable with serde.
 ///
 /// `bevy_wasm` uses `bincode` for serialization, so it's relatively fast.
-pub trait Message: Send + Sync + Serialize + DeserializeOwned + Clone + 'static {}
+pub trait Message: Event + Send + Sync + Serialize + DeserializeOwned + Clone + 'static {}
 
-impl<T> Message for T where T: Send + Sync + Serialize + DeserializeOwned + Clone + 'static {}
+impl<T> Message for T where T: Event + Send + Sync + Serialize + DeserializeOwned + Clone + 'static {}
 
 /// Any data type that can be used as a shared resource from Host to Mod
 ///

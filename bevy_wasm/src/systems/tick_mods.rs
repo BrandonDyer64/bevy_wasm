@@ -10,7 +10,7 @@ pub fn tick_mods<In: Message, Out: Message>(
     mut wasm_mods: Query<&mut WasmInstance>,
 ) {
     let serialized_events_in: Vec<Arc<[u8]>> = events_in
-        .iter()
+        .read()
         .flat_map(|event| bincode::serialize(event))
         .map(|bytes| bytes.into())
         .collect();
@@ -26,7 +26,9 @@ pub fn tick_mods<In: Message, Out: Message>(
 
         for serialized_event_out in serialized_events_out {
             match bincode::deserialize(&serialized_event_out) {
-                Ok(event_out) => events_out.send(event_out),
+                Ok(event_out) => {
+                    _ = events_out.send(event_out)
+                },
                 Err(err) => error!("Error while deserializing event: {}", err),
             }
         }

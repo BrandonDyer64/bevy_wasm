@@ -6,6 +6,9 @@ use bevy::{
     utils::{HashMap, Instant},
 };
 use bevy_wasm_shared::version::Version;
+use uuid::Uuid;
+use wasi_common::sync::WasiCtxBuilder;
+use wasi_common::WasiCtx;
 use wasmtime::*;
 
 use crate::{mod_state::ModState, SharedResource};
@@ -20,6 +23,11 @@ pub struct WasmRuntime {
     protocol_version: Version,
 }
 
+pub struct WasiModState {
+    mod_state: ModState,
+    wasi_ctx: WasiCtx,
+}
+
 impl WasmRuntime {
     pub fn new(protocol_version: Version) -> Self {
         Self {
@@ -31,16 +39,26 @@ impl WasmRuntime {
     pub fn create_instance(&self, wasm_bytes: &[u8]) -> Result<WasmInstance> {
         // Create store and instance
         let module = Module::new(&self.engine, wasm_bytes)?;
-        let mut store = Store::new(
-            &self.engine,
-            ModState {
-                startup_time: Instant::now(),
-                app_ptr: 0,
-                events_out: Vec::new(),
-                events_in: VecDeque::new(),
-                shared_resource_values: HashMap::new(),
-            },
-        );
+        let wasi_ctx = WasiCtxBuilder::new()
+            .inherit_stdio()
+            .inherit_args()?
+            .build();
+
+        let mod_state = ModState {
+            startup_time: Instant::now(),
+            app_ptr: 0,
+            events_out: Vec::new(),
+            events_in: VecDeque::new(),
+            shared_resource_values: HashMap::new(),
+        };
+
+        let wasi_mod_state = WasiModState {
+            mod_state,
+            wasi_ctx,
+        };
+
+        let mut store = Store::new(&self.engine, wasi_mod_state);
+
         let instance = build_linker(&self.engine, self.protocol_version)
             .context("Failed to build a linker for bevy_wasm")?
             .module(&mut store, "", &module)?
@@ -59,17 +77,17 @@ impl WasmRuntime {
 #[derive(Component)]
 pub struct WasmInstance {
     instance: Instance,
-    store: Store<ModState>,
+    store: Store<WasiModState>,
 }
 
 impl WasmInstance {
     /// Tick the internal mod state
     pub(crate) fn tick(&mut self, events_in: &[Arc<[u8]>]) -> Result<Vec<Box<[u8]>>> {
         for event in events_in.iter() {
-            self.store.data_mut().events_in.push_back(event.clone());
+            self.store.data_mut().mod_state.events_in.push_back(event.clone());
         }
 
-        let app_ptr = self.store.data().app_ptr;
+        let app_ptr = self.store.data().mod_state.app_ptr;
 
         // Call `extern "C" fn update`
         self.instance
@@ -77,7 +95,7 @@ impl WasmInstance {
             .call(&mut self.store, app_ptr)
             .context("Failed to call update")?;
 
-        let serialized_events_out = std::mem::take(&mut self.store.data_mut().events_out);
+        let serialized_events_out = std::mem::take(&mut self.store.data_mut().mod_state.events_out);
 
         Ok(serialized_events_out)
     }
@@ -86,6 +104,9 @@ impl WasmInstance {
     pub fn update_resource_value<T: SharedResource>(&mut self, bytes: Arc<[u8]>) {
         let state = self.store.data_mut();
 
-        state.shared_resource_values.insert(T::TYPE_UUID, bytes);
+        state
+            .mod_state
+            .shared_resource_values
+            .insert(Uuid::from_bytes(T::UUID), bytes);
     }
 }

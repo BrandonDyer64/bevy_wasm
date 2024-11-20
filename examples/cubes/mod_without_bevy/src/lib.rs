@@ -1,7 +1,5 @@
-use bevy_wasm_sys::events::get_next_event;
-use bevy_wasm_sys::events::send_event;
-use bevy_wasm_sys::ffi;
-use bevy_wasm_sys::info;
+use bevy_wasm_sys_core::events::{get_next_event, send_event};
+use bevy_wasm_sys_core::{ffi, info};
 use cubes_protocol::{HostMessage, ModMessage};
 
 use std::ffi::c_void;
