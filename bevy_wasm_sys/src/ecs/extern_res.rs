@@ -8,21 +8,28 @@ use std::{
     ops::Deref,
 };
 
+use bevy_wasm_shared::resource_id::{ResourceId, resource_id};
 use bevy_ecs::{prelude::*, system::SystemParam};
-use bevy_reflect::TypeUuid;
+// use bevy_reflect::TypeUuid;
+// use bevy_reflect::TypePath;
+use bevy_reflect::Reflect;
 use serde::{de::DeserializeOwned, Serialize};
 
 use crate::error;
 
 /// A resource that can be shared from the Host
-pub trait SharedResource: Resource + Default + Serialize + DeserializeOwned + TypeUuid {}
+// pub trait SharedResource: Resource + Default + Serialize + DeserializeOwned + TypePath {}
+pub trait SharedResource: Resource + Default + Serialize + DeserializeOwned + Reflect {}
 
-impl<T: Resource + Default + Serialize + DeserializeOwned + TypeUuid> SharedResource for T {}
+// impl<T: Resource + Default + Serialize + DeserializeOwned + TypePath> SharedResource for T {}
+impl<T: Resource + Default + Serialize + DeserializeOwned + Reflect> SharedResource for T {}
 
 /// Get the value of a resource from the host
 pub fn get_resource<T: SharedResource>() -> Option<T> {
-    let (uuid_0, uuid_1) = T::TYPE_UUID.as_u64_pair();
+    // let (uuid_0, uuid_1) = T::TYPE_UUID.as_u64_pair();
 
+    let ResourceId(uuid_0, uuid_1) = resource_id::<T>();
+   // let ResourceId(uuid_0, uuid_1) = resource_id::<T>();
     let mut buffer = [0; 1024];
 
     let len = unsafe {
@@ -159,9 +166,9 @@ impl Default for ExternResources {
 #[derive(SystemParam)]
 pub struct ExternRes<'w, 's, T: Resource + Serialize + DeserializeOwned> {
     res: Res<'w, ExternResources>,
-    #[system_param(ignore)]
+   // #[system_param(ignore)]
     t: PhantomData<T>,
-    #[system_param(ignore)]
+  //  #[system_param(ignore)]
     marker: PhantomData<&'s ()>,
 }
 

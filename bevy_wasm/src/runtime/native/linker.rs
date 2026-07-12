@@ -1,7 +1,10 @@
 use std::time::Instant;
+use tracing::{error, info, warn};
 
+use bevy_wasm_shared::resource_id::{ResourceId, resource_id};
 use anyhow::Result;
-use bevy::{prelude::*, utils::Uuid};
+// use bevy::{prelude::*, utils::Uuid};
+use bevy::prelude::*;
 use bevy_wasm_shared::prelude::*;
 use colored::*;
 use wasmtime::*;
@@ -143,7 +146,8 @@ pub(crate) fn build_linker(engine: &Engine, protocol_version: Version) -> Result
                 _ => panic!("failed to find mod memory"),
             };
 
-            let uuid = Uuid::from_u64_pair(uuid_0, uuid_1);
+            let uuid = ResourceId(uuid_0, uuid_1);
+            //let uuid = Uuid::from_u64_pair(uuid_0, uuid_1);
             let resource_bytes = caller.data_mut().shared_resource_values.remove(&uuid);
 
             let resource_bytes = match resource_bytes {
@@ -219,6 +223,23 @@ pub(crate) fn build_linker(engine: &Engine, protocol_version: Version) -> Result
         "__wbindgen_externref_table_set_null",
         |v: i32| {
             info!("__wbindgen_externref_table_set_null: {}", v);
+        },
+    )?;
+// ADDED BELOW
+    linker.func_wrap(
+        "__wbindgen_placeholder__",
+        "__wbg___wbindgen_throw_344f42d3211c4765",
+        |mut caller: Caller<'_, ModState>, msg: i32, len: i32| {
+            let mem = caller.get_export("memory")
+                .and_then(|e| e.into_memory())
+                .expect("memory missing");
+
+            let data = mem.data(&caller);
+
+            let slice = &data[msg as usize..msg as usize + len as usize];
+            let string = unsafe { std::str::from_utf8_unchecked(slice) };
+
+            eprintln!("WASM THROW: {string}");
         },
     )?;
     Ok(linker)

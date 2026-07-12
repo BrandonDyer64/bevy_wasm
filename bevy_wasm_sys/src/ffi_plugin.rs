@@ -1,10 +1,11 @@
 //! The plugin for your mod
 
 use std::ffi::c_void;
-
-use bevy_app::{App, Plugin};
+use bevy_app::AppExit;
+use bevy_app::Update;
+use bevy_app::{App, Startup, Plugin};
 use bevy_ecs::{
-    prelude::{EventReader, EventWriter},
+    message::{MessageReader, MessageWriter},
     system::ResMut,
 };
 use bevy_wasm_shared::prelude::*;
@@ -72,8 +73,10 @@ impl<In: Message, Out: Message> FFIPlugin<In, Out> {
         }
     }
 }
-
-impl<In: Message, Out: Message> Plugin for FFIPlugin<In, Out> {
+//impl<In: Message + bevy_ecs::message::Message, Out: Message> Plugin for FFIPlugin<In, Out> {
+//impl<In: Message, Out: Message> Plugin for FFIPlugin<In, Out> {
+// impl<In: bevy_ecs::message::Message + serde::Serialize + for<'de> serde::Deserialize<'de>, Out: bevy_ecs::message::Message + serde::Serialize + for<'de> serde::Deserialize<'de>> Plugin for FFIPlugin<In + for<'de> serde::Deserialize<'de>, Out + serde::Serialize + for<'de> serde::Deserialize<'de>> {
+impl<In: Message + Serialize + bevy_ecs::message::Message, Out: Message + serde::de::DeserializeOwned + bevy_ecs::message::Message> Plugin for FFIPlugin<In, Out> {
     fn build(&self, app: &mut App) {
         let host_version = unsafe { crate::ffi::get_protocol_version() };
         let host_version = Version::from_u64(host_version);
@@ -89,15 +92,16 @@ impl<In: Message, Out: Message> Plugin for FFIPlugin<In, Out> {
             );
             return;
         }
+        // app.set_runner(app_runner)
         app.set_runner(app_runner)
-            .add_event::<In>()
-            .add_event::<Out>()
+            .add_message::<In>()
+            .add_message::<Out>()
             .insert_resource(Time::new())
             .insert_resource(ExternResources::new())
-            .add_system(update_time)
-            .add_system(fetch_resources)
-            .add_system(event_listener::<In>)
-            .add_system(event_sender::<Out>);
+            .add_systems(Update, update_time)
+            .add_systems(Startup, fetch_resources)
+            .add_systems(Update, event_listener::<In>)
+            .add_systems(Update, event_sender::<Out>);
         // .add_system_to_stage(CoreStage::First, update_time.at_start())
         // .add_system_to_stage(CoreStage::PreUpdate, fetch_resources)
         // .add_system_to_stage(CoreStage::PreUpdate, event_listener::<In>)
@@ -109,25 +113,36 @@ fn fetch_resources(mut resources: ResMut<ExternResources>) {
     resources.fetch_all();
 }
 
-fn event_listener<M: Message>(mut events: EventWriter<M>) {
+fn event_listener<M: Message>(mut events: MessageWriter<M>) where M: bevy_ecs::message::Message {
     while let Some(event) = get_next_event() {
-        events.send(event);
+        events.write(event);
     }
 }
 
-fn event_sender<M: Message>(mut events: EventReader<M>) {
-    for event in events.iter() {
+fn event_sender<M: Message>(mut events: MessageReader<M>) where M: bevy_ecs::message::Message {
+    for event in events.read() {
         send_event(event);
     }
 }
-
+/*
 fn app_runner(app: App) {
     let app = Box::new(app);
     let app_ptr = Box::into_raw(app);
     let app_ptr = app_ptr as *const c_void;
     unsafe { store_app(app_ptr) };
 }
+*/
+fn app_runner(app: App) -> AppExit {
+    let app = Box::new(app);
+    let app_ptr = Box::into_raw(app);
+    let app_ptr = app_ptr as *const c_void;
 
+    unsafe {
+        store_app(app_ptr);
+    }
+
+    AppExit::Success
+}
 fn update_time(mut time: ResMut<Time>) {
     time.update();
 }

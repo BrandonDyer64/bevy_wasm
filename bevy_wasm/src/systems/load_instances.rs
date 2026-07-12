@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-
+use tracing::{error, info, warn};
 use crate::{
     components::WasmMod,
     runtime::{WasmInstance, WasmRuntime},

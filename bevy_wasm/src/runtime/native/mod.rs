@@ -3,8 +3,12 @@ use std::{collections::VecDeque, sync::Arc};
 use anyhow::{Context, Result};
 use bevy::{
     prelude::{Component, Resource},
-    utils::{HashMap, Instant},
+//    utils::{HashMap, Instant},
 };
+use std::collections::HashMap;
+use std::time::Instant;
+
+use bevy_wasm_shared::resource_id::resource_id;
 use bevy_wasm_shared::version::Version;
 use wasmtime::*;
 
@@ -83,9 +87,19 @@ impl WasmInstance {
     }
 
     /// Update the value of a shared resource as seen by the mod
+/*
     pub fn update_resource_value<T: SharedResource>(&mut self, bytes: Arc<[u8]>) {
         let state = self.store.data_mut();
 
         state.shared_resource_values.insert(T::TYPE_UUID, bytes);
+    }
+    */
+    pub fn update_resource_value<T: 'static>(&mut self, bytes: Arc<[u8]>) {
+        let id = resource_id::<T>();
+
+        self.store
+            .data_mut()
+            .shared_resource_values
+            .insert(id, bytes);
     }
 }

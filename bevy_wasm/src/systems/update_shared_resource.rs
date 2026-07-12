@@ -1,5 +1,5 @@
 use std::{ops::Deref, sync::Arc};
-
+use tracing::{error, info, warn};
 use bevy::prelude::*;
 
 use crate::{runtime::WasmInstance, SharedResource};

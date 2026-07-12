@@ -1,5 +1,5 @@
 [package]
-edition = "2021"
+edition = "2024"
 license = "MIT OR Apache-2.0"
 name = "cubes_protocol"
 publish = false
@@ -8,3 +8,4 @@ version = "123.456.789"
 [dependencies]
 bevy_wasm_shared = {path = "../../../bevy_wasm_shared"}
 serde = {version = "1.0", features = ["derive"]}
+bevy_ecs = "0.18.0"

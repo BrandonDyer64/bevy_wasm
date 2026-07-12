@@ -33,6 +33,6 @@ fn build_wasm_pkg(name: &str) {
             .join(name)
             .join(format!("wasm32-unknown-unknown/release-wasm/{name}.wasm")),
         std::path::Path::new("./assets").join(format!("{name}.wasm")),
-    )
-    .unwrap();
+    );
+//    .unwrap();
 }

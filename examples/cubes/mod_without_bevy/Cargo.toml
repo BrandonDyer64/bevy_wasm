@@ -1,9 +1,9 @@
 [package]
-edition = "2021"
+edition = "2024"
 license = "MIT OR Apache-2.0"
 name = "mod_without_bevy"
 publish = false
-version = "0.1.0"
+version = "0.18.0"
 
 [lib]
 # Generate a `.wasm` file instead of a dll
@@ -11,7 +11,8 @@ crate-type = ["cdylib"]
 
 [dependencies]
 cubes_protocol = {path = "../cubes_protocol"}
-
+# uuid = { version = "1", features = ["v4", "rng-getrandom"] }
+getrandom = { version = "0.2", features = ["js"] }
 [dependencies.bevy_wasm_sys]
 default-features = false # <- because we don't want any Bevy stuff
 path = "../../../bevy_wasm_sys"

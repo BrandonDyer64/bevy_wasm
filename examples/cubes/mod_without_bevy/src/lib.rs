@@ -16,8 +16,8 @@ struct AppState {
     y: f32,
 }
 
-#[no_mangle]
 #[allow(clippy::missing_safety_doc)]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn build_app() {
     info!("Hello from build_app inside mod_without_bevy!");
     let app_state = AppState {
@@ -38,8 +38,8 @@ pub unsafe extern "C" fn build_app() {
     ffi::store_app(app_ptr);
 }
 
-#[no_mangle]
 #[allow(clippy::missing_safety_doc)]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn update(app_state: *mut c_void) {
     let app_state = app_state as *mut AppState;
     update_app_state(&mut *app_state);

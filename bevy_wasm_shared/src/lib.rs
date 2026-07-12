@@ -5,7 +5,8 @@
 #![deny(missing_docs)]
 
 pub mod version;
-
+/// Cube Identification
+pub mod resource_id;
 /// Convenience re-exports
 pub mod prelude {
     pub use crate::version;
